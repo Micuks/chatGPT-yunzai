@@ -1,0 +1,14 @@
+{
+	"name": "chatgpt-plugin",
+	"version": "0.1.0",
+	"description": "Plugin for Yunzai-bot",
+	"type": "module",
+	"author": "Louis Wu",
+	"license": "MIT",
+	"dependencies": {
+		"chatgpt": "^3.3.11",
+		"mathjax-node": "^2.1.1",
+		"puppeteer": "^19.4.1",
+		"showdown": "^2.1.0"
+	}
+}
