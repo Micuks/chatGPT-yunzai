@@ -30,7 +30,7 @@ export class help extends plugin {
             priority: 500,
             rule: [
                 {
-                    reg: '#(chatgpt/ChatGPT)(commands|命令|help|帮助|menu|菜单)',
+                    reg: '#(chatgpt|ChatGPT)(commands|命令|help|帮助|menu|菜单)',
                     fnc: 'help'
                 }
             ]

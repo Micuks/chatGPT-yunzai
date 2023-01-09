@@ -1,10 +1,9 @@
-import plugin from "../../../lib/plugins/plugin.js";
-import _ from "lodash";
-import { Config } from "../config/config.js";
-import showdown from "showdown";
-import mjAPI from "mathjax-node";
 import { ChatGPTAPIBrowser } from "chatgpt";
-import { readdirSync } from "fs";
+import _ from "lodash";
+import mjAPI from "mathjax-node";
+import showdown from "showdown";
+import plugin from "../../../lib/plugins/plugin.js";
+import { Config } from "../config/config.js";
 
 const blockWords = ["Block1", "Block2", "Block3"];
 const converter = new showdown.Converter({
@@ -23,6 +22,32 @@ mjAPI.config({
 });
 mjAPI.start();
 
+let chatGPTAPI = initAPI();
+
+function initAPI() {
+  let settings = {
+    email: Config.username,
+    password: Config.password,
+    proxyServer: Config.proxy,
+  };
+  // Configure nopecha key to pass reCaptcha validation.
+  if (Config.nopechaKey.length) {
+    settings.nopechaKey = Config.nopechaKey;
+  }
+  redis.set("CHATGPT:API_SETTINGS", JSON.stringify(settings));
+
+  let chatGPTAPI = new ChatGPTAPIBrowser(settings);
+
+  try {
+    chatGPTAPI.initSession();
+  } catch (error) {
+    logger.error("ChatGPT API failed to initialize session.");
+    logger.error(error);
+  }
+
+  return chatGPTAPI;
+}
+
 export class chatgpt extends plugin {
   constructor() {
     super({
@@ -33,16 +58,16 @@ export class chatgpt extends plugin {
       priority: 15000,
       rule: [
         {
-          reg: "^[^#][sS]*",
+          reg: "^[?|\\%|？][sS]*",
           fnc: "chat",
         },
         {
           reg: "^#聊天列表$",
           fnc: "getChats",
-          permission: "master",
+          // permission: "master",
         },
         {
-          reg: "^#结束聊天([sS]*)$",
+          reg: "^#(结束|停止)(聊天|对话)([sS]*)$",
           fnc: "destroyChat",
         },
         {
@@ -55,6 +80,8 @@ export class chatgpt extends plugin {
         },
       ],
     });
+    
+    this.chatGPTAPI = chatGPTAPI;
   }
 
   async getChats(e) {
@@ -147,21 +174,11 @@ export class chatgpt extends plugin {
     if (e.isGroup && !(e.atme || e.msg.startsWith("?"))) {
       return;
     }
-    let settings = {
-      email: Config.username,
-      password: Config.password,
-      proxyServer: Config.proxy,
-      nopechaKey: Config.nopechaKey,
-    };
-
-    await redis.set("CHATGPT:API_SETTINGS", JSON.stringify(settings));
-
-    this.chatGPTAPI = new ChatGPTAPIBrowser(settings);
-    try {
-      await this.chatGPTAPI.initSession();
-    } catch (error) {
-      logger.error("ChatGPT API failed to initialize session.");
-      logger.error(error);
+    // Create new ChatGPTAPIBrowser if not exists
+    if (!this.chatGPTAPI) {
+      logger.error("No available ChatGPT API.");
+      e.reply("No ChatGPT API available.");
+      return false;
     }
 
     let question = e.msg.trimStart();
@@ -172,6 +189,9 @@ export class chatgpt extends plugin {
     let prevChat = await redis.get(`CHATGPT:CHATS:${e.sender.user_id}`);
     let chat = null;
     if (!prevChat) {
+      logger.info(
+        `No previous chats of ${e.sender.username}[${e.sender.user_id}]`
+      );
       let ctime = new Date();
       prevChat = {
         sender: e.sender,
@@ -187,29 +207,20 @@ export class chatgpt extends plugin {
       };
     }
     try {
-      let settings = {
-        onChatResponse: function (c) {
-          prevChat.chat = {
-            conversationId: c.conversationId,
-            parentMessageId: c.message.Id,
-          };
-          redis.set(
-            `CHATGPT:CHATS:${e.sender.user_id}`,
-            JSON.stringify(prevChat)
-          );
-        },
-      };
+      let res = null;
       if (chat) {
-        settings = Object.assign(settings, chat);
+        res = await this.chatGPTAPI.sendMessage(question, chat);
+      } else {
+        res = await this.chatGPTAPI.sendMessage(question);
       }
-      let res = await this.chatGPTAPI.sendMessage(question, settings);
-      // const blockWord = blockWords.find((word) =>
-      //   response.toLowerCase().includes(word.toLowerCase())
-      // );
-      // if (blockWord) {
-      //   await this.reply("Sensitive word in response.", true);
-      //   return;
-      // }
+
+      const blockWord = blockWords.find((word) =>
+        res.response.toLowerCase().includes(word.toLowerCase())
+      );
+      if (blockWord) {
+        await this.reply("Sensitive word in response.", true);
+        return;
+      }
       let userSetting = await redis.get(`CHATGPT:USER:${e.sender.user_id}`);
       if (userSetting) {
         userSetting = JSON.parse(userSetting);
@@ -223,6 +234,15 @@ export class chatgpt extends plugin {
       } else {
         await this.reply(`${res.response}`, e.isGroup);
       }
+
+      // Update chat conversationId and parentMessageId for continuous chat
+      chat = {
+        conversationId: res.conversationId,
+        parentMessageId: res.messageId,
+      };
+      prevChat.chat = chat;
+      prevChat.count++;
+      redis.set(`CHATGPT:CHATS:${e.sender.user_id}`, JSON.stringify(prevChat));
     } catch (e) {
       logger.error(e);
       await this.reply(
