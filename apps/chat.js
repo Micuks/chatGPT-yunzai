@@ -15,13 +15,6 @@ const converter = new showdown.Converter({
  */
 const CHAT_PRESERVE_TIME = 600;
 
-mjAPI.config({
-  MathJax: {
-    // traditional MathJax configuration
-  },
-});
-mjAPI.start();
-
 let chatGPTAPI = initAPI();
 
 function initAPI() {
@@ -53,21 +46,20 @@ export class chatgpt extends plugin {
     super({
       name: "ChatGPT",
       dsc: "chatgpt by openai",
-      /** https://oicqjs.github.io/oicq/#events */
       event: "message",
-      priority: 15000,
+      priority: 1500,
       rule: [
         {
-          reg: "^[?|\\%|？][sS]*",
+          reg: "^[\\?\\uFF1F][\\s\\S]*",
           fnc: "chat",
         },
         {
           reg: "^#聊天列表$",
           fnc: "getChats",
-          // permission: "master",
+          permission: "master",
         },
         {
-          reg: "^#(结束|停止)(聊天|对话)([sS]*)$",
+          reg: "^#(结束|停止)(聊天|对话)([\\s\\S]*)$",
           fnc: "destroyChat",
         },
         {
@@ -243,12 +235,13 @@ export class chatgpt extends plugin {
       prevChat.chat = chat;
       prevChat.count++;
       redis.set(`CHATGPT:CHATS:${e.sender.user_id}`, JSON.stringify(prevChat));
-    } catch (e) {
-      logger.error(e);
+    } catch (error) {
+      logger.error(error);
       await this.reply(
-        `Error answering the question, please try later.\n${e}`,
+        `Error answering the question, please try later.\n${error}`,
         true
       );
+      // if(error)
     }
   }
 }
