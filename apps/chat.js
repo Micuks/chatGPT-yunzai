@@ -29,7 +29,7 @@ function initAPI() {
   }
   redis.set("CHATGPT:API_SETTINGS", JSON.stringify(settings));
 
-  let chatGPTAPI = new ChatGPTAPIBrowser(settings);
+  let chatGPTAPI = new ChatGPTAPI(settings);
 
   try {
     chatGPTAPI.initSession();
