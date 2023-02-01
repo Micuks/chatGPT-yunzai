@@ -1,4 +1,3 @@
-import { ChatGPTAPIBrowser } from "chatgpt";
 import _ from "lodash";
 import mjAPI from "mathjax-node";
 import showdown from "showdown";
