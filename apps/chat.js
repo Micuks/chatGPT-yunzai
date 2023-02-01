@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { ChatGPTAPI } from 'chatgpt';
 import mjAPI from "mathjax-node";
 import showdown from "showdown";
 import plugin from "../../../lib/plugins/plugin.js";
