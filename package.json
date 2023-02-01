@@ -6,7 +6,7 @@
 	"author": "Louis Wu",
 	"license": "MIT",
 	"dependencies": {
-		"chatgpt": "^3.3.11",
+		"chatgpt": "^4.0.0",
 		"mathjax-node": "^2.1.1",
 		"puppeteer": "^19.4.1",
 		"showdown": "^2.1.0"
