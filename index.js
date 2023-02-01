@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 
 const files = fs
-  .readdirSync("./plugins/chatgpt-plugin/apps")
+  .readdirSync("./plugins/chatGPT-yunzai/apps")
   .filter((file) => file.endsWith(".js"))
 
 let ret = []
