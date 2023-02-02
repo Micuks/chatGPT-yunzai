@@ -223,7 +223,7 @@ export class chatgpt extends plugin {
       // Update chat conversationId and parentMessageId for continuous chat
       chat = {
         conversationId: res.conversationId,
-        parentMessageId: res.messageId,
+        parentMessageId: res.id,
       };
       prevChat.chat = chat;
       prevChat.count++;
