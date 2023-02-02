@@ -1,14 +1,8 @@
-import _ from "lodash";
 import { ChatGPTAPI } from 'chatgpt';
-import mjAPI from "mathjax-node";
-import showdown from "showdown";
 import plugin from "../../../lib/plugins/plugin.js";
 import { Config } from "../config/config.js";
 
 const blockWords = ["Block1", "Block2", "Block3"];
-const converter = new showdown.Converter({
-  extensions: [],
-});
 
 /**
  * How long does each chat preserved in seconds.
@@ -19,8 +13,7 @@ let chatGPTAPI = initAPI();
 
 function initAPI() {
   let settings = {
-    email: Config.username,
-    password: Config.password,
+    apiKey: Config.api_key,
     proxyServer: Config.proxy,
   };
   // Configure nopecha key to pass reCaptcha validation.
@@ -31,12 +24,12 @@ function initAPI() {
 
   let chatGPTAPI = new ChatGPTAPI(settings);
 
-  try {
-    chatGPTAPI.initSession();
-  } catch (error) {
-    logger.error("ChatGPT API failed to initialize session.");
-    logger.error(error);
-  }
+  // try {
+  //   chatGPTAPI.initSession();
+  // } catch (error) {
+  //   logger.error("ChatGPT API failed to initialize session.");
+  //   logger.error(error);
+  // }
 
   return chatGPTAPI;
 }
@@ -207,7 +200,7 @@ export class chatgpt extends plugin {
       }
 
       const blockWord = blockWords.find((word) =>
-        res.response.toLowerCase().includes(word.toLowerCase())
+        res.text.toLowerCase().includes(word.toLowerCase())
       );
       if (blockWord) {
         await this.reply("Sensitive word in response.", true);
@@ -224,7 +217,7 @@ export class chatgpt extends plugin {
       if (userSetting.usePicture) {
         // TODO
       } else {
-        await this.reply(`${res.response}`, e.isGroup);
+        await this.reply(`${res.text}`, e.isGroup);
       }
 
       // Update chat conversationId and parentMessageId for continuous chat

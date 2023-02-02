@@ -6,9 +6,6 @@
 	"author": "Louis Wu",
 	"license": "MIT",
 	"dependencies": {
-		"chatgpt": "^4.0.0",
-		"mathjax-node": "^2.1.1",
-		"puppeteer": "^19.6.2",
-		"showdown": "^2.1.0"
+		"chatgpt": "^4.0.3"
 	}
 }
