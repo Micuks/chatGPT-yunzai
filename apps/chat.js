@@ -1,14 +1,8 @@
 import { ChatGPTAPIBrowser } from "chatgpt";
-import _ from "lodash";
-import mjAPI from "mathjax-node";
-import showdown from "showdown";
 import plugin from "../../../lib/plugins/plugin.js";
 import { Config } from "../config/config.js";
 
 const blockWords = ["Block1", "Block2", "Block3"];
-const converter = new showdown.Converter({
-  extensions: [],
-});
 
 /**
  * How long does each chat preserved in seconds.
@@ -61,10 +55,6 @@ export class chatgpt extends plugin {
         {
           reg: "^#(结束|停止)(聊天|对话)([\\s\\S]*)$",
           fnc: "destroyChat",
-        },
-        {
-          reg: "#图片聊天",
-          fnc: "picMode",
         },
         {
           reg: "#文本聊天",
@@ -173,7 +163,7 @@ export class chatgpt extends plugin {
       return false;
     }
 
-    let question = e.msg.trimStart();
+    let question = e.msg.trimStart().substring(1);
     logger.info(`ChatGPT question: ${question}`);
     await this.reply("I'm thinking this question, please wait...", true, {
       recallMsg: 15,

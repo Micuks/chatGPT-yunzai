@@ -9,5 +9,4 @@ export const Config = {
   password: "",
   captchaToken: CAPTCHA_TOKEN,
   nopechaKey: NOPECHA_TOKEN,
-  usePicture: false,
 };
