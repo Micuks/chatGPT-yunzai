@@ -1,4 +1,4 @@
-import { ChatGPTAPI } from 'chatgpt';
+import { ChatGPTAPI } from "chatgpt";
 import plugin from "../../../lib/plugins/plugin.js";
 import { Config } from "../config/config.js";
 
@@ -12,17 +12,29 @@ const CHAT_PRESERVE_TIME = 600;
 let chatGPTAPI = initAPI();
 
 function initAPI() {
-  let settings = {
-    apiKey: Config.api_key,
+  const settings = {
     proxyServer: Config.proxy,
   };
+  if (Config.apiReverseProxyUrl !== "") {
+    settings.apiReverseProxyUrl = Config.apiReverseProxyUrl;
+  }
   // Configure nopecha key to pass reCaptcha validation.
   if (Config.nopechaKey.length) {
     settings.nopechaKey = Config.nopechaKey;
   }
   redis.set("CHATGPT:API_SETTINGS", JSON.stringify(settings));
 
-  let chatGPTAPI = new ChatGPTAPI(settings);
+  let chatGPTAPI = null;
+
+  if (Config.useUnofficial) {
+    settings.username = Config.username,
+      settings.password = Config.password,
+      settings.accessToken = Config.apiAccessToken;
+    chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
+  } else {
+    settings.apiKey = Config.api_key;
+    chatGPTAPI = new ChatGPTAPI(settings);
+  }
 
   // try {
   //   chatGPTAPI.initSession();
@@ -65,7 +77,7 @@ export class chatgpt extends plugin {
         },
       ],
     });
-    
+
     this.chatGPTAPI = chatGPTAPI;
   }
 
@@ -81,9 +93,10 @@ export class chatgpt extends plugin {
           let chat = await redis.get(key);
           if (chat) {
             chat = JSON.parse(chat);
-            response += `${chat.sender.nickname} | ${chat.num} | ${chat.ctime} | ${chat.utime}\n`;
+            response +=
+              `${chat.sender.nickname} | ${chat.num} | ${chat.ctime} | ${chat.utime}\n`;
           }
-        })
+        }),
       );
       await this.reply(`${response}`, true);
     }
@@ -99,7 +112,7 @@ export class chatgpt extends plugin {
         await redis.del(`CHATGPT:CHATS:${e.sender.user_id}`);
         await this.reply(
           "Destroyed current chat, @me to start new chat.",
-          true
+          true,
         );
       }
     } else {
@@ -126,11 +139,11 @@ export class chatgpt extends plugin {
     userSetting.usePicture = true;
     await redis.set(
       `CHATGPT:USERS:${e.sender.user_id}`,
-      JSON.stringify(userSetting)
+      JSON.stringify(userSetting),
     );
     await this.reply(
       `ChatGPT reply mode of ${e.sender.user_id} switched to picture mode.`,
-      true
+      true,
     );
   }
 
@@ -144,11 +157,11 @@ export class chatgpt extends plugin {
     userSetting.usePicture = false;
     await redis.set(
       `CHATGPT:USERS:${e.sender.user_id}`,
-      JSON.stringify(userSetting)
+      JSON.stringify(userSetting),
     );
     await this.reply(
       `ChatGPT reply mode of ${e.sender.user_id} switched to text mode.`,
-      true
+      true,
     );
   }
 
@@ -175,7 +188,7 @@ export class chatgpt extends plugin {
     let chat = null;
     if (!prevChat) {
       logger.info(
-        `No previous chats of ${e.sender.username}[${e.sender.user_id}]`
+        `No previous chats of ${e.sender.username}[${e.sender.user_id}]`,
       );
       let ctime = new Date();
       prevChat = {
@@ -232,7 +245,7 @@ export class chatgpt extends plugin {
       logger.error(error);
       await this.reply(
         `Error answering the question, please try later.\n${error}`,
-        true
+        true,
       );
       // if(error)
     }
