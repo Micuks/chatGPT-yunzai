@@ -16,10 +16,6 @@ function initAPI() {
   let settings = {
     proxyServer: Config.proxy,
   };
-  settings.debug = true;
-  if (Config.apiReverseProxyUrl !== "") {
-    settings.apiReverseProxyUrl = Config.apiReverseProxyUrl;
-  }
   // Configure nopecha key to pass reCaptcha validation.
   if (Config.nopechaKey.length) {
     settings.nopechaKey = Config.nopechaKey;
@@ -28,6 +24,10 @@ function initAPI() {
   let chatGPTAPI = null;
 
   if (Config.useUnofficial) {
+    settings.debug = true;
+    if (Config.apiReverseProxyUrl !== "") {
+      settings.apiReverseProxyUrl = Config.apiReverseProxyUrl;
+    }
     settings.username = Config.username;
     settings.password = Config.password;
     settings.accessToken = Config.apiAccessToken;
@@ -203,10 +203,12 @@ export class chatgpt extends plugin {
     try {
       let res = null;
       if (chat) {
-        res = await oraPromise(this.chatGPTAPI.sendMessage(question, chat));
+        res = await this.chatGPTAPI.sendMessage(question, chat);
       } else {
-        res = await oraPromise(this.chatGPTAPI.sendMessage(question));
+        res = await this.chatGPTAPI.sendMessage(question);
       }
+
+      logger.info(`Get response text: ${res.text}`);
 
       const blockWord = blockWords.find((word) =>
         res.text.toLowerCase().includes(word.toLowerCase())
