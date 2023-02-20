@@ -1,4 +1,5 @@
-import { ChatGPTAPI } from "chatgpt";
+import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
+import oraPromise from "ora";
 import plugin from "../../../lib/plugins/plugin.js";
 import { Config } from "../config/config.js";
 
@@ -12,9 +13,10 @@ const CHAT_PRESERVE_TIME = 600;
 let chatGPTAPI = initAPI();
 
 function initAPI() {
-  const settings = {
+  let settings = {
     proxyServer: Config.proxy,
   };
+  settings.debug = true;
   if (Config.apiReverseProxyUrl !== "") {
     settings.apiReverseProxyUrl = Config.apiReverseProxyUrl;
   }
@@ -22,26 +24,20 @@ function initAPI() {
   if (Config.nopechaKey.length) {
     settings.nopechaKey = Config.nopechaKey;
   }
-  redis.set("CHATGPT:API_SETTINGS", JSON.stringify(settings));
 
   let chatGPTAPI = null;
 
   if (Config.useUnofficial) {
-    settings.username = Config.username,
-      settings.password = Config.password,
-      settings.accessToken = Config.apiAccessToken;
+    settings.username = Config.username;
+    settings.password = Config.password;
+    settings.accessToken = Config.apiAccessToken;
     chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
   } else {
     settings.apiKey = Config.api_key;
     chatGPTAPI = new ChatGPTAPI(settings);
   }
 
-  // try {
-  //   chatGPTAPI.initSession();
-  // } catch (error) {
-  //   logger.error("ChatGPT API failed to initialize session.");
-  //   logger.error(error);
-  // }
+  redis.set("CHATGPT:API_SETTINGS", JSON.stringify(settings));
 
   return chatGPTAPI;
 }
@@ -207,9 +203,9 @@ export class chatgpt extends plugin {
     try {
       let res = null;
       if (chat) {
-        res = await this.chatGPTAPI.sendMessage(question, chat);
+        res = await oraPromise(this.chatGPTAPI.sendMessage(question, chat));
       } else {
-        res = await this.chatGPTAPI.sendMessage(question);
+        res = await oraPromise(this.chatGPTAPI.sendMessage(question));
       }
 
       const blockWord = blockWords.find((word) =>
@@ -247,7 +243,6 @@ export class chatgpt extends plugin {
         `Error answering the question, please try later.\n${error}`,
         true,
       );
-      // if(error)
     }
   }
 }
