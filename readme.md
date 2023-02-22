@@ -1,5 +1,7 @@
-# 使用openAI官方API或反向代理非官方API的Yunzai-Bot(v3)的chatGPT插件
+# 使用openAI API的Yunzai-Bot(v3)的chatGPT插件
 > ChatGPT plugin for Yunzai-Bot with official OpenAI API or unofficial OpenAI API with reverse proxy.
+> 使用openAI官方API或反向代理非官方API的Yunzai-Bot(v3)的chatGPT插件
+
 
 ## Usage
 
