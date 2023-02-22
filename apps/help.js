@@ -5,7 +5,7 @@ let helpData = [
     group: "Chat",
     list: [
       {
-        title: "@me+Question",
+        title: "?Question",
         desc: "Chat with me",
       },
     ],
@@ -38,7 +38,6 @@ export class help extends plugin {
   }
 
   async help(e) {
-    await this.reply(`Ask me in the following pattern: ?Question`);
+    await this.reply(`Ask question: ?Question\nGet chats statistics: #聊天列表\n`);
   }
 }
-
