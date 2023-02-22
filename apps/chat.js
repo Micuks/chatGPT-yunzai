@@ -5,11 +5,6 @@ import { Config } from "../config/config.js";
 
 const blockWords = ["Block1", "Block2", "Block3"];
 
-/**
- * How long does each chat preserved in seconds.
- */
-const CHAT_PRESERVE_TIME = 600;
-
 let chatGPTAPI = initAPI();
 
 function initAPI() {
@@ -83,14 +78,14 @@ export class chatgpt extends plugin {
       await this.reply("No chats now.", true);
     } else {
       let response = "Current chats:\n";
-      response += "Sender | Chat length | Start time | Last active time\n";
+      // response += "Sender | Call counts | Start time | Last active time\n";
       await Promise.all(
         keys.map(async (key) => {
           let chat = await redis.get(key);
           if (chat) {
             chat = JSON.parse(chat);
             response +=
-              `${chat.sender.nickname} | ${chat.num} | ${chat.ctime} | ${chat.utime}\n`;
+              `${chat.sender.nickname}:\n\tCall counts: ${chat.count}\n\tStart time: ${chat.ctime}\n\tLast active time: ${chat.utime}\n`;
           }
         }),
       );
@@ -237,7 +232,8 @@ export class chatgpt extends plugin {
         parentMessageId: res.id,
       };
       prevChat.chat = chat;
-      prevChat.count++;
+      prevChat.utime = new Date();
+      prevChat.count += 1;
       redis.set(`CHATGPT:CHATS:${e.sender.user_id}`, JSON.stringify(prevChat));
     } catch (error) {
       logger.error(error);
