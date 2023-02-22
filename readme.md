@@ -35,6 +35,7 @@ npm run start
 # in QQ
 ?Tell me something about Python
 ```
+![example](./docs/example.png)
 
 ## Help
 
