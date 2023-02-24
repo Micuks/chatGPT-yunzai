@@ -19,7 +19,7 @@ function initAPI() {
   let chatGPTAPI = null;
 
   if (Config.useUnofficial) {
-    settings.debug = true;
+    settings.debug = false;
     if (Config.apiReverseProxyUrl !== "") {
       settings.apiReverseProxyUrl = Config.apiReverseProxyUrl;
     }
