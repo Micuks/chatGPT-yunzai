@@ -176,7 +176,13 @@ export class chatgpt extends plugin {
       recallMsg: 15,
     });
     let prevChat = await redis.get(`CHATGPT:CHATS:${e.sender.user_id}`);
-    let chat = null;
+    // Prompt prefix
+    let chat = {
+      promptPrefix:
+        `You are ChatGPT, a large language model trained by OpenAI. You answer as detailed as possible for each response. Your answer should be in Chinese by default. If you are generating a list, remember to have too many items. Current date: ${
+          new Date().toISOString()
+        }\n\n`,
+    };
     if (!prevChat) {
       logger.info(
         `No previous chats of ${e.sender.username}[${e.sender.user_id}]`,
@@ -190,18 +196,13 @@ export class chatgpt extends plugin {
       };
     } else {
       prevChat = JSON.parse(prevChat);
-      chat = {
+      chat = Object.assign({}, chat, {
         conversationId: prevChat.chat.conversationId,
         parentMessageId: prevChat.chat.parentMessageId,
-      };
+      });
     }
     try {
-      let res = null;
-      if (chat) {
-        res = await this.chatGPTAPI.sendMessage(question, chat);
-      } else {
-        res = await this.chatGPTAPI.sendMessage(question);
-      }
+      let res = await this.chatGPTAPI.sendMessage(question, chat);
 
       logger.info(`Get response text: ${res.text}`);
 
