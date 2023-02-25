@@ -5,14 +5,13 @@ const NOPECHA_TOKEN = "";
 const API_KEY = "";
 const API_REVERSE_PROXY_URL = "";
 const API_ACCESS_TOKEN = "";
-const USERNAME = "";
-const PASSWORD = "";
+const MODEL_PAID = false;
+const USE_UNOFFICIAL = false;
 
 export const Config = {
-  username: USERNAME,
-  password: PASSWORD,
+  modelPaid: MODEL_PAID,
   apiAccessToken: API_ACCESS_TOKEN,
-  useUnofficial: false,
+  useUnofficial: USE_UNOFFICIAL,
   token: SESSION_TOKEN,
   proxy: PROXY,
   api_key: API_KEY,

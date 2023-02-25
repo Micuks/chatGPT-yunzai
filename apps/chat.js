@@ -1,5 +1,5 @@
 import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
-import oraPromise from "ora";
+// import oraPromise from "ora";
 import plugin from "../../../lib/plugins/plugin.js";
 import { Config } from "../config/config.js";
 
@@ -19,14 +19,20 @@ function initAPI() {
   let chatGPTAPI = null;
 
   if (Config.useUnofficial) {
-    settings.debug = false;
+    // settings.debug = true;
     if (Config.apiReverseProxyUrl !== "") {
       settings.apiReverseProxyUrl = Config.apiReverseProxyUrl;
     }
-    settings.username = Config.username;
-    settings.password = Config.password;
     settings.accessToken = Config.apiAccessToken;
     chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
+
+    // Set model to be paid or free.
+    if (Config.modelPaid) {
+      console.log("Use paid model. Wish you were in ChatGPT plus plan!");
+      settings.model = "text-davinci-002-render-paid";
+    } else {
+      settings.model = "text-davinci-002-render-sha";
+    }
   } else {
     settings.apiKey = Config.api_key;
     chatGPTAPI = new ChatGPTAPI(settings);
