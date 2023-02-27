@@ -10,6 +10,7 @@ let chatGPTAPI = initAPI();
 function initAPI() {
   let settings = {
     proxyServer: Config.proxy,
+    debug: false, // true for debug
   };
   // Configure nopecha key to pass reCaptcha validation.
   if (Config.nopechaKey.length) {
@@ -20,11 +21,10 @@ function initAPI() {
 
   if (Config.useUnofficial) {
     // settings.debug = true;
-    if (Config.apiReverseProxyUrl !== "") {
+    if (Config.apiReverseProxyUrl.length) {
       settings.apiReverseProxyUrl = Config.apiReverseProxyUrl;
     }
     settings.accessToken = Config.apiAccessToken;
-    chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
 
     // Set model to be paid or free.
     if (Config.modelPaid) {
@@ -33,6 +33,8 @@ function initAPI() {
     } else {
       settings.model = "text-davinci-002-render-sha";
     }
+
+    chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
   } else {
     settings.apiKey = Config.api_key;
     chatGPTAPI = new ChatGPTAPI(settings);
