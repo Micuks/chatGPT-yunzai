@@ -6,7 +6,7 @@
 	"author": "Louis Wu",
 	"license": "MIT",
 	"dependencies": {
-		"chatgpt": "^4.7.2",
+		"chatgpt": "^4.8.3",
 		"ora": "^6.1.2"
 	}
 }

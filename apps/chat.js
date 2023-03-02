@@ -28,14 +28,22 @@ function initAPI() {
 
     // Set model to be paid or free.
     if (Config.modelPaid) {
-      console.log("Use paid model. Wish you were in ChatGPT plus plan!");
-      settings.model = "text-davinci-002-render-paid";
+      logger.info("Use paid model. Wish you were in ChatGPT plus plan!");
+      settings.completionParams = {
+        model: "text-davinci-002-render-paid",
+      };
     } else {
-      settings.model = "text-davinci-002-render-sha";
+      settings.completionParams = {
+        model: "text-davinci-002-render-sha",
+      };
     }
 
     chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
   } else {
+    settings.completionParams = {
+      model: Config.modelName,
+    };
+    console.log(`Using model ${Config.modelName}`);
     settings.apiKey = Config.api_key;
     chatGPTAPI = new ChatGPTAPI(settings);
   }
@@ -178,7 +186,7 @@ export class chatgpt extends plugin {
       return false;
     }
 
-    let question = e.msg.trimStart();
+    let question = e.msg.slice(1, e.msg.len);
     logger.info(`ChatGPT question: ${question}`);
     await this.reply("I'm thinking this question, please wait...", true, {
       recallMsg: 15,
