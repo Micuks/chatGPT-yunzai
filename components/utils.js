@@ -1,0 +1,65 @@
+import { Config } from "../config/config.js";
+import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
+
+const CHAT_EXPIRATION = 3 * 24 * 60 * 60;
+const blockWords = ["Block1", "Block2", "Block3"];
+
+export function initAPI() {
+  let settings = {
+    proxyServer: Config.proxy,
+    debug: false, // true for debug
+  };
+  // Configure nopecha key to pass reCaptcha validation.
+  if (Config.nopechaKey.length) {
+    settings.nopechaKey = Config.nopechaKey;
+  }
+
+  let chatGPTAPI = null;
+
+  if (Config.useUnofficial) {
+    // settings.debug = true;
+    if (Config.apiReverseProxyUrl.length) {
+      settings.apiReverseProxyUrl = Config.apiReverseProxyUrl;
+    }
+    settings.accessToken = Config.apiAccessToken;
+
+    // Set model to be paid or free.
+    if (Config.modelPaid) {
+      logger.info("Use paid model. Wish you were in ChatGPT plus plan!");
+      settings.completionParams = {
+        model: "text-davinci-002-render-paid",
+      };
+    } else {
+      settings.completionParams = {
+        model: "text-davinci-002-render-sha",
+      };
+    }
+
+    chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
+  } else {
+    if (Config.modelName.len) {
+      settings.completionParams = {
+        model: Config.modelName,
+      };
+      logger.info(`Using model ${Config.modelName}`);
+    }
+    settings.apiKey = Config.api_key;
+    chatGPTAPI = new ChatGPTAPI(settings);
+  }
+
+  redis.set("CHATGPT:API_SETTINGS", JSON.stringify(settings));
+
+  return chatGPTAPI;
+}
+
+export const isChatExpired = (date) => {
+  const currTime = new Date();
+  return (currTime - date) / 1000 > CHAT_EXPIRATION;
+};
+
+export const isBlocked = (message) => {
+  const blockWord = blockWords.find((word) =>
+    message.toLowerCase().includes(word.toLowerCase())
+  );
+  return blockWord;
+};

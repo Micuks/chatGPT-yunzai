@@ -1,62 +1,9 @@
-import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
 // import oraPromise from "ora";
 import plugin from "../../../lib/plugins/plugin.js";
-import { Config } from "../config/config.js";
-import QuestionQueue from "./queue";
-import Question from "./question";
+import QuestionQueue from "../components/queue.js";
+import Question from "../components/question.js";
 
 const blockWords = ["Block1", "Block2", "Block3"];
-
-let chatGPTAPI = initAPI();
-let questionQueue = new QuestionQueue();
-
-async function initAPI() {
-  let settings = {
-    proxyServer: Config.proxy,
-    debug: false, // true for debug
-  };
-  // Configure nopecha key to pass reCaptcha validation.
-  if (Config.nopechaKey.length) {
-    settings.nopechaKey = Config.nopechaKey;
-  }
-
-  let chatGPTAPI = null;
-
-  if (Config.useUnofficial) {
-    // settings.debug = true;
-    if (Config.apiReverseProxyUrl.length) {
-      settings.apiReverseProxyUrl = Config.apiReverseProxyUrl;
-    }
-    settings.accessToken = Config.apiAccessToken;
-
-    // Set model to be paid or free.
-    if (Config.modelPaid) {
-      logger.info("Use paid model. Wish you were in ChatGPT plus plan!");
-      settings.completionParams = {
-        model: "text-davinci-002-render-paid",
-      };
-    } else {
-      settings.completionParams = {
-        model: "text-davinci-002-render-sha",
-      };
-    }
-
-    chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
-  } else {
-    if (Config.modelName.len) {
-      settings.completionParams = {
-        model: Config.modelName,
-      };
-      logger.info(`Using model ${Config.modelName}`);
-    }
-    settings.apiKey = Config.api_key;
-    chatGPTAPI = new ChatGPTAPI(settings);
-  }
-
-  redis.set("CHATGPT:API_SETTINGS", JSON.stringify(settings));
-
-  return chatGPTAPI;
-}
 
 export class chatgpt extends plugin {
   constructor() {
@@ -67,7 +14,8 @@ export class chatgpt extends plugin {
       priority: 1500,
       rule: [
         {
-          reg: "^[\\s]*\\?[\\s\\S]*",
+          // reg: "^[\\s]*\\?[\\s\\S]*",
+          reg: "^test[\\s\\S]*",
           fnc: "chat",
         },
         {
@@ -90,14 +38,8 @@ export class chatgpt extends plugin {
       ],
     });
 
-    this.chatGPTAPI = chatGPTAPI;
-    this.questionQueue = questionQueue();
-    this.questionQueue.yunzai = this;
+    this.questionQueue = new QuestionQueue();
   }
-
-  main = async () => {
-    this.questionQueue.controller();
-  };
 
   async getChats(e) {
     let keys = await redis.keys("CHATGPT:CHATS:*");
@@ -183,8 +125,12 @@ export class chatgpt extends plugin {
   }
 
   async chat(e) {
-    const question = new Question(e, e.msg.slice(1, e.msg.len));
-    this.questionQueue.add(question);
-    this.questionQueue.controller();
+    const question = new Question(e.msg.slice(1, e.msg.len), e.sender);
+    await this.questionQueue.enQueue(question);
+
+    await this.questionQueue.controller();
+    this.questionQueue.queue.on("completed", async (job, response) => {
+      this.reply(response, true);
+    });
   }
 }
