@@ -255,7 +255,7 @@ export class chatgpt extends plugin {
     } catch (error) {
       logger.error(error);
       await this.reply(
-        `Error answering the question, please try later.\n${error}`,
+        `An error occurred while answering this question. please again try later.\n${error}\nTrying input "#结束对话" may help to solve the problem.`,
         true,
       );
     }
