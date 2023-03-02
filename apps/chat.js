@@ -40,10 +40,12 @@ function initAPI() {
 
     chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
   } else {
-    settings.completionParams = {
-      model: Config.modelName,
-    };
-    logger.info(`Using model ${Config.modelName}`);
+    if (Config.modelName.len) {
+      settings.completionParams = {
+        model: Config.modelName,
+      };
+      logger.info(`Using model ${Config.modelName}`);
+    }
     settings.apiKey = Config.api_key;
     chatGPTAPI = new ChatGPTAPI(settings);
   }
@@ -62,7 +64,7 @@ export class chatgpt extends plugin {
       priority: 1500,
       rule: [
         {
-          reg: "^[\\?\\uFF1F][\\s\\S]*",
+          reg: "^[\\s]*\\?[\\s\\S]*",
           fnc: "chat",
         },
         {
@@ -257,7 +259,7 @@ export class chatgpt extends plugin {
       const eMsg = error.message;
       await this.reply(
         `An error occurred while answering this question. please again try later.\n${
-          eMsg.slice(0, 20)
+          eMsg.slice(0, 50)
         }\n...\nTrying input "#结束对话" may help to solve the problem.`,
         true,
       );
