@@ -258,9 +258,7 @@ export class chatgpt extends plugin {
       await this.reply(
         `An error occurred while answering this question. please again try later.\n${
           eMsg.slice(0, 20)
-        }\n...\n${
-          eMsg.slice(eMsg.len - 20, eMsg.len)
-        }\nTrying input "#结束对话" may help to solve the problem.`,
+        }\n...\nTrying input "#结束对话" may help to solve the problem.`,
         true,
       );
     }
