@@ -43,7 +43,7 @@ function initAPI() {
     settings.completionParams = {
       model: Config.modelName,
     };
-    console.log(`Using model ${Config.modelName}`);
+    logger.info(`Using model ${Config.modelName}`);
     settings.apiKey = Config.api_key;
     chatGPTAPI = new ChatGPTAPI(settings);
   }
@@ -194,7 +194,7 @@ export class chatgpt extends plugin {
     let prevChat = await redis.get(`CHATGPT:CHATS:${e.sender.user_id}`);
     // Prompt prefix
     let chat = {
-      promptPrefix:
+      systemMessage:
         `You are ChatGPT, a large language model trained by OpenAI. You answer as detailed as possible for each response. Your answer should be in Chinese by default. If you are generating a list, remember to have too many items. Current date: ${
           new Date().toISOString()
         }\n\n`,
@@ -254,8 +254,13 @@ export class chatgpt extends plugin {
       redis.set(`CHATGPT:CHATS:${e.sender.user_id}`, JSON.stringify(prevChat));
     } catch (error) {
       logger.error(error);
+      const eMsg = error.message;
       await this.reply(
-        `An error occurred while answering this question. please again try later.\n${error}\nTrying input "#结束对话" may help to solve the problem.`,
+        `An error occurred while answering this question. please again try later.\n${
+          eMsg.slice(0, 20)
+        }\n...\n${
+          eMsg.slice(eMsg.len - 20, eMsg.len)
+        }\nTrying input "#结束对话" may help to solve the problem.`,
         true,
       );
     }
