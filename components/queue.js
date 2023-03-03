@@ -4,12 +4,12 @@ import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
 import { isChatExpired, isBlocked, initAPI } from "./utils.js";
 import Question from "./question.js";
 
-// const chatGPTAPI = await initAPI();
+const chatGPTAPI = await initAPI();
 
 export default class QuestionQueue {
   constructor() {
     this.queue = new Bull("questionQueue");
-    this.chatGPTAPI = initAPI();
+    this.chatGPTAPI = chatGPTAPI;
   }
 
   enQueue = async (question) => {

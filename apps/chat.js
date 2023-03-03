@@ -125,12 +125,30 @@ export class chatgpt extends plugin {
   }
 
   async chat(e) {
+    const count = await this.questionQueue.queue.count();
+    if (!count) {
+      delete this.questionQueue;
+      this.questionQueue = new QuestionQueue();
+    }
+
     const question = new Question(e.msg.slice(1, e.msg.len), e.sender);
     await this.questionQueue.enQueue(question);
+    await this.questionQueue.queue.count().then((count) => {
+      this.reply(
+        `I'm thinking of your question. There're ${count} questions to be thinked before your question.`,
+        true,
+        { recallMsg: 10 }
+      );
+    });
 
     await this.questionQueue.controller();
-    this.questionQueue.queue.on("completed", async (job, response) => {
-      this.reply(response, true);
+
+    this.questionQueue.queue.on("completed", (job, response) => {
+      this.callback(response);
     });
+  }
+
+  async callback(response) {
+    this.reply(response, true);
   }
 }
