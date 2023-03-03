@@ -13,7 +13,7 @@ export default class QuestionQueue {
   }
 
   enQueue = async (question) => {
-    await this.queue.add(question);
+    return await this.queue.add(question);
   };
 
   async controller() {

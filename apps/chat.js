@@ -15,7 +15,7 @@ export class chatgpt extends plugin {
       rule: [
         {
           // reg: "^[\\s]*\\?[\\s\\S]*",
-          reg: "^test[\\s\\S]*",
+          reg: "^[\\s]*![\\s\\S]*",
           fnc: "chat",
         },
         {
@@ -132,7 +132,7 @@ export class chatgpt extends plugin {
     }
 
     const question = new Question(e.msg.slice(1, e.msg.len), e.sender);
-    await this.questionQueue.enQueue(question);
+    const job = await this.questionQueue.enQueue(question);
     await this.questionQueue.queue.count().then((count) => {
       this.reply(
         `I'm thinking of your question. There're ${count} questions to be thinked before your question.`,
@@ -143,7 +143,7 @@ export class chatgpt extends plugin {
 
     await this.questionQueue.controller();
 
-    this.questionQueue.queue.on("completed", (job, response) => {
+    await job.finished().then((response) => {
       this.callback(response);
     });
   }
