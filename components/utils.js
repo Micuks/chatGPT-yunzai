@@ -1,4 +1,6 @@
 import { Config } from "../config/config.js";
+import proxy from "https-proxy-agent";
+import nodeFetch from "node-fetch";
 import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
 
 const CHAT_EXPIRATION = 3 * 24 * 60 * 60;
@@ -6,13 +8,8 @@ const blockWords = ["Block1", "Block2", "Block3"];
 
 export function initAPI() {
   let settings = {
-    proxyServer: Config.proxy,
     debug: false, // true for debug
   };
-  // Configure nopecha key to pass reCaptcha validation.
-  if (Config.nopechaKey.length) {
-    settings.nopechaKey = Config.nopechaKey;
-  }
 
   let chatGPTAPI = null;
 
@@ -37,6 +34,9 @@ export function initAPI() {
 
     chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
   } else {
+    if (Config.proxy) {
+      settings.fetch = fetchBehindProxy;
+    }
     if (Config.modelName.len) {
       settings.completionParams = {
         model: Config.modelName,
@@ -62,4 +62,16 @@ export const isBlocked = (message) => {
     message.toLowerCase().includes(word.toLowerCase())
   );
   return blockWord;
+};
+
+const fetchBehindProxy = (url, options = {}) => {
+  const proxyServer = Config.proxy;
+  const defaultOptions = {
+    agent: proxy(proxyServer),
+  };
+  const mergedOptions = {
+    ...defaultOptions,
+    ...options,
+  };
+  return nodeFetch(url, mergedOptions);
 };

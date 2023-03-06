@@ -38,6 +38,8 @@ export class help extends plugin {
   }
 
   async help(e) {
-    await this.reply(`Ask question: ?Question\nGet chats statistics: #聊天列表\n`);
+    await this.reply(
+      `Ask question: ?Question\nGet chats statistics: #聊天列表\nDestroy your chat: #结束对话`,
+    );
   }
 }

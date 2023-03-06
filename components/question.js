@@ -20,10 +20,10 @@ export default class Question {
       }
     }
 
-    const timeElapsed = Math.abs(prevChat.utime - Date.now()) / 1000;
+    const timeElapsed = Math.abs(prevChat.ctime - Date.now()) / 1000;
     const timeOut = 600;
     if (timeElapsed > timeOut) {
-      logger.info(`Chat time out: ${timeElapsed} seconds passed.`);
+      logger.info(`Chat timeout: ${timeElapsed} seconds passed.`);
       prevChat = await this.createNewPrevChat();
     }
 
