@@ -4,7 +4,7 @@ const PROXY = ""; // Your proxy url if you use a proxy
 const MODEL_NAME = "gpt-3.5-turbo-0301"; // Fill in the model you want to use
 const API_KEY = ""; // Fill in if you use **OFFICIAL OPENAI DAVINCI MODEL**
 
-const API_REVERSE_PROXY_URL = "https://chat.duti.tech/api/conversation"; // (Optional)
+const API_REVERSE_PROXY_URL = ""; // (Optional)
 // Fill in if you use unofficial reverse proxy solution.
 // By default this is enough
 
@@ -20,6 +20,7 @@ export const Config = {
   modelPaid: MODEL_PAID,
   apiAccessToken: API_ACCESS_TOKEN,
   useUnofficial: USE_UNOFFICIAL,
+  token: SESSION_TOKEN,
   proxy: PROXY,
   api_key: API_KEY,
   captchaToken: CAPTCHA_TOKEN,
