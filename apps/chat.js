@@ -126,12 +126,14 @@ export class chatgpt extends plugin {
 
   async chat(e) {
     const count = await this.questionQueue.queue.count();
-    if (!count) {
+    if (count === 0) {
       delete this.questionQueue;
-      this.questionQueue = new QuestionQueue();
+      this.questionQueue = new QuestionQueue(redis);
     }
 
     const question = new Question(e.msg.slice(1, e.msg.len), e.sender);
+    question.prevChat = await question.getOrCreatePrevChat();
+
     const job = await this.questionQueue.enQueue(question);
     await this.questionQueue.queue.count().then((count) => {
       this.reply(
@@ -144,11 +146,36 @@ export class chatgpt extends plugin {
     await this.questionQueue.controller();
 
     await job.finished().then((response) => {
-      this.callback(response);
+      this.callback(e, response);
     });
   }
 
-  async callback(response) {
-    this.reply(response, true);
+  async callback(e, response) {
+    this.reply(response.text, true);
+    this.updateChat(e, response);
+  }
+
+  async updateChat(e, res) {
+    console.log("Update prevChat");
+    let prevChat = await redis.get(`CHATGPT:CHATS:${e.sender.user_id}`);
+    prevChat = await JSON.parse(prevChat);
+    let chat = {
+      conversationId: res.conversationId,
+      parentMessageId: res.id,
+    };
+    prevChat = {
+      sender: e.sender,
+      chat: chat,
+      utime: new Date(),
+      ctime: prevChat.ctime ? prevChat.ctime : new Date(),
+      count: prevChat?.count + 1,
+    };
+
+    await redis.set(
+      `CHATGPT:CHATS:${prevChat.sender.user_id}`,
+      JSON.stringify(prevChat)
+    );
+
+    console.log(prevChat);
   }
 }

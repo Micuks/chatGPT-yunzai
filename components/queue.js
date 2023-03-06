@@ -1,10 +1,9 @@
 import Bull from "bull";
-import QueueEvents from "bull";
-import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
+// import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
 import { isChatExpired, isBlocked, initAPI } from "./utils.js";
-import Question from "./question.js";
+// import Question from "./question.js";
 
-const chatGPTAPI = await initAPI();
+const chatGPTAPI = initAPI();
 
 export default class QuestionQueue {
   constructor() {
@@ -26,9 +25,21 @@ export default class QuestionQueue {
     job.remove();
   }
 
+  getChat = (job) => {
+    console.log("---job.data---")
+    console.log(job.data)
+    return {
+      systemMessage: `You are ChatGPT, a large language model trained by OpenAI. You answer as detailed as possible for each response. Your answer should be in Chinese by default. If you are generating a list, remember to have too many items. Current date: ${new Date().toISOString()}\n\n`,
+      conversationId: job.data.prevChat.chat.conversationId,
+      parentMessageId: job.data.prevChat.chat.parentMessageId,
+    };
+  };
+
   askAndReply = async (job) => {
-    const question = job.data.question;
-    const chat = job.data.chat;
+    const question = await job.data.question;
+    const chat = this.getChat(job);
+    console.log("---chat---");
+    console.log(chat);
     try {
       const res = await this.chatGPTAPI.sendMessage(question, chat);
       logger.info(`Get response text: ${res.text}`);
@@ -37,37 +48,18 @@ export default class QuestionQueue {
         return "Sensitive word in response.";
       }
 
-      this.updateChat(res, job);
-      return res.text;
+      return res;
     } catch (err) {
       logger.error(err);
       if (err.message.includes("conversationId")) {
-        this.removeExpiredChat(job);
+        await this.removeExpiredChat(job);
       }
 
-      return (
+      res.text =
         `An error occurred while answering this question. please again try later.\n` +
-        `${err.message.slice(0, 50)}\n`
-      );
+        `${err.message.slice(0, 50)}\n`;
+      return res;
     }
-  };
-
-  updateChat = async (res, job) => {
-    let chat = {
-      conversationId: res.conversationId,
-      parentMessageId: res.id,
-    };
-    let prevChat = {
-      sender: job.data.sender,
-      chat: chat,
-      utime: new Date(),
-      ctime: job.data.prevChat.ctime,
-      count: job.data.prevChat.count + 1,
-    };
-    await redis.set(
-      `CHATGPT:CHATS:${prevChat.sender.user_id}`,
-      JSON.stringify(prevChat)
-    );
   };
 
   getUserSetting = async () => {
