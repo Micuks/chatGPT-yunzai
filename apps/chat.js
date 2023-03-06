@@ -14,8 +14,7 @@ export class chatgpt extends plugin {
       priority: 1500,
       rule: [
         {
-          // reg: "^[\\s]*\\?[\\s\\S]*",
-          reg: "^[\\s]*![\\s\\S]*",
+          reg: "^[\\s]*\\?[\\s\\S]*",
           fnc: "chat",
         },
         {
@@ -54,9 +53,10 @@ export class chatgpt extends plugin {
           let chat = await redis.get(key);
           if (chat) {
             chat = JSON.parse(chat);
-            response += `${chat.sender.nickname}:\n\tCall counts: ${chat.count}\n\tStart time: ${chat.ctime}\n\tLast active time: ${chat.utime}\n`;
+            response +=
+              `${chat.sender.nickname}:\n\tCall counts: ${chat.count}\n\tStart time: ${chat.ctime}\n\tLast active time: ${chat.utime}\n`;
           }
-        })
+        }),
       );
       await this.reply(`${response}`, true);
     }
@@ -72,7 +72,7 @@ export class chatgpt extends plugin {
         await redis.del(`CHATGPT:CHATS:${e.sender.user_id}`);
         await this.reply(
           "Destroyed current chat, @me to start new chat.",
-          true
+          true,
         );
       }
     } else {
@@ -99,11 +99,11 @@ export class chatgpt extends plugin {
     userSetting.usePicture = true;
     await redis.set(
       `CHATGPT:USERS:${e.sender.user_id}`,
-      JSON.stringify(userSetting)
+      JSON.stringify(userSetting),
     );
     await this.reply(
       `ChatGPT reply mode of ${e.sender.user_id} switched to picture mode.`,
-      true
+      true,
     );
   }
 
@@ -117,11 +117,11 @@ export class chatgpt extends plugin {
     userSetting.usePicture = false;
     await redis.set(
       `CHATGPT:USERS:${e.sender.user_id}`,
-      JSON.stringify(userSetting)
+      JSON.stringify(userSetting),
     );
     await this.reply(
       `ChatGPT reply mode of ${e.sender.user_id} switched to text mode.`,
-      true
+      true,
     );
   }
 
@@ -140,7 +140,7 @@ export class chatgpt extends plugin {
         `Waiting jobs: ${waitingCount}\n` +
         `Active jobs: ${activeCount}`,
       true,
-      { recallMsg: 10 }
+      { recallMsg: 10 },
     );
 
     // await this.questionQueue.controller();
@@ -173,7 +173,7 @@ export class chatgpt extends plugin {
 
     await redis.set(
       `CHATGPT:CHATS:${prevChat.sender.user_id}`,
-      JSON.stringify(prevChat)
+      JSON.stringify(prevChat),
     );
   }
 }
