@@ -8,7 +8,7 @@ export default class Question {
     let prevChat = await redis.get(`CHATGPT:CHATS:${this.sender.user_id}`);
     if (!prevChat) {
       logger.info(
-        `No previous chats of ${this.sender.nickname}[${this.sender.user_id}]`
+        `No previous chats of ${this.sender.nickname}[${this.sender.user_id}]`,
       );
       prevChat = await this.createNewPrevChat();
     } else {
@@ -16,19 +16,26 @@ export default class Question {
         prevChat = await JSON.parse(prevChat);
       } catch (e) {
         logger.error(e);
-        prevChat = this.createNewPrevChat();
+        prevChat = await this.createNewPrevChat();
       }
+    }
+
+    const timeElapsed = Math.abs(prevChat.utime - Date.now()) / 1000;
+    const timeOut = 600;
+    if (timeElapsed > timeOut) {
+      logger.info(`Chat time out: ${timeElapsed} seconds passed.`);
+      prevChat = await this.createNewPrevChat();
     }
 
     await redis.set(
       `CHATGPT:CHATS:${this.sender.user_id}`,
-      JSON.stringify(prevChat)
+      JSON.stringify(prevChat),
     );
     return prevChat;
   }
 
   createNewPrevChat = async () => {
-    let ctime = new Date();
+    const ctime = new Date();
     return {
       sender: this.sender,
       count: 0,

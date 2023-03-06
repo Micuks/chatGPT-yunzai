@@ -14,7 +14,7 @@ export class chatgpt extends plugin {
       priority: 1500,
       rule: [
         {
-          reg: "^[\\s]*\\?[\\s\\S]*",
+          reg: "^[\\s]*(\\?|!)[\\s\\S]*",
           fnc: "chat",
         },
         {
@@ -33,6 +33,10 @@ export class chatgpt extends plugin {
         {
           reg: "#文本聊天",
           fnc: "txtMode",
+        },
+        {
+          reg: "#清除队列",
+          fnc: "cleanQueue",
         },
       ],
     });
@@ -71,7 +75,7 @@ export class chatgpt extends plugin {
       } else {
         await redis.del(`CHATGPT:CHATS:${e.sender.user_id}`);
         await this.reply(
-          "Destroyed current chat, @me to start new chat.",
+          'Destroyed current chat, input "?QUestion" to start new chat.',
           true,
         );
       }
@@ -175,5 +179,10 @@ export class chatgpt extends plugin {
       `CHATGPT:CHATS:${prevChat.sender.user_id}`,
       JSON.stringify(prevChat),
     );
+  }
+
+  async cleanQueue(e) {
+    this.questionQueue.queue.clean(5000, "active");
+    this.questionQueue.queue.clean(5000, "waiting");
   }
 }

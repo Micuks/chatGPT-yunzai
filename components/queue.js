@@ -1,6 +1,6 @@
 import Bull from "bull";
 // import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
-import { isChatExpired, isBlocked, initAPI } from "./utils.js";
+import { initAPI, isBlocked, isChatExpired } from "./utils.js";
 // import Question from "./question.js";
 
 const chatGPTAPI = initAPI();
@@ -12,7 +12,7 @@ export default class QuestionQueue {
   }
 
   enQueue = async (question) => {
-    return await this.queue.add(question);
+    return await this.queue.add(question, { timeout: 60000 });
   };
 
   async controller() {
@@ -27,7 +27,10 @@ export default class QuestionQueue {
 
   getChat = (job) => {
     return {
-      systemMessage: `You are ChatGPT, a large language model trained by OpenAI. You answer as detailed as possible for each response. Your answer should be in Chinese by default. If you are generating a list, remember to have too many items. Current date: ${new Date().toISOString()}\n\n`,
+      systemMessage:
+        `You are ChatGPT, a large language model trained by OpenAI. You answer as detailed as possible for each response. Your answer should be in Chinese by default. If you are generating a list, remember to have too many items. Current date: ${
+          new Date().toISOString()
+        }\n\n`,
       conversationId: job.data.prevChat.chat?.conversationId,
       parentMessageId: job.data.prevChat.chat?.parentMessageId,
     };
@@ -37,6 +40,7 @@ export default class QuestionQueue {
     const question = await job.data.question;
     const chat = this.getChat(job);
     try {
+      logger.info(`Current question: ${question}`);
       const res = await this.chatGPTAPI.sendMessage(question, chat);
       logger.info(`Get response text: ${res.text}`);
 
