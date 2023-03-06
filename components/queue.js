@@ -28,8 +28,8 @@ export default class QuestionQueue {
   getChat = (job) => {
     return {
       systemMessage: `You are ChatGPT, a large language model trained by OpenAI. You answer as detailed as possible for each response. Your answer should be in Chinese by default. If you are generating a list, remember to have too many items. Current date: ${new Date().toISOString()}\n\n`,
-      conversationId: job.data.prevChat.chat.conversationId,
-      parentMessageId: job.data.prevChat.chat.parentMessageId,
+      conversationId: job.data.prevChat.chat?.conversationId,
+      parentMessageId: job.data.prevChat.chat?.parentMessageId,
     };
   };
 
@@ -51,9 +51,13 @@ export default class QuestionQueue {
         await this.removeExpiredChat(job);
       }
 
-      res.text =
-        `An error occurred while answering this question. please again try later.\n` +
-        `${err.message.slice(0, 50)}\n`;
+      let res = {
+        text:
+          `An error occurred while answering this question. please again try later.\n` +
+          `${err.message.slice(0, 50)}\n`,
+        conversationId: chat?.conversationId,
+        id: chat?.parentMessageId,
+      };
       return res;
     }
   };

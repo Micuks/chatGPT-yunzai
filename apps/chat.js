@@ -136,7 +136,7 @@ export class chatgpt extends plugin {
     const activeCount = await this.questionQueue.queue.getActiveCount();
 
     this.reply(
-      `I'm thinking of your question.\n` +
+      `I'm thinking of your question, ${e.sender.nickname}.\n` +
         `Waiting jobs: ${waitingCount}\n` +
         `Active jobs: ${activeCount}`,
       true,
@@ -160,8 +160,8 @@ export class chatgpt extends plugin {
     let prevChat = await redis.get(`CHATGPT:CHATS:${e.sender.user_id}`);
     prevChat = await JSON.parse(prevChat);
     let chat = {
-      conversationId: res.conversationId,
-      parentMessageId: res.id,
+      conversationId: res?.conversationId,
+      parentMessageId: res?.id,
     };
     prevChat = {
       sender: e.sender,

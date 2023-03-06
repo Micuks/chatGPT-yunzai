@@ -2,15 +2,16 @@ export default class Question {
   constructor(question, sender) {
     this.question = question;
     this.sender = sender;
+    console.log(sender);
   }
 
   async getOrCreatePrevChat() {
     let prevChat = await redis.get(`CHATGPT:CHATS:${this.sender.user_id}`);
     if (!prevChat) {
       logger.info(
-        `No previous chats of ${this.sender.username}[${this.sender.user_id}]`
+        `No previous chats of ${this.sender.nickname}[${this.sender.user_id}]`
       );
-      prevChat = this.createNewPrevChat();
+      prevChat = await this.createNewPrevChat();
     } else {
       try {
         prevChat = await JSON.parse(prevChat);
@@ -27,7 +28,7 @@ export default class Question {
     return prevChat;
   }
 
-  createNewPrevChat = () => {
+  createNewPrevChat = async () => {
     let ctime = new Date();
     return {
       sender: this.sender,
