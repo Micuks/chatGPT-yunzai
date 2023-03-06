@@ -2,7 +2,6 @@ export default class Question {
   constructor(question, sender) {
     this.question = question;
     this.sender = sender;
-    console.log(sender);
   }
 
   async getOrCreatePrevChat() {
