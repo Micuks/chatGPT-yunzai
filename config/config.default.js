@@ -20,7 +20,6 @@ export const Config = {
   modelPaid: MODEL_PAID,
   apiAccessToken: API_ACCESS_TOKEN,
   useUnofficial: USE_UNOFFICIAL,
-  token: SESSION_TOKEN,
   proxy: PROXY,
   api_key: API_KEY,
   captchaToken: CAPTCHA_TOKEN,
