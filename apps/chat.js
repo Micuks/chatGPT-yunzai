@@ -175,7 +175,7 @@ export class chatgpt extends plugin {
       sender: e.sender,
       chat: chat,
       utime: new Date(),
-      ctime: prevChat.ctime ? prevChat.ctime : new Date(),
+      ctime: prevChat?.ctime ? prevChat.ctime : new Date(),
       count: prevChat?.count + 1,
     };
 
