@@ -12,7 +12,6 @@ export default class Question {
       );
       prevChat = this.createNewPrevChat();
     } else {
-      console.log("prevChat exists.");
       try {
         prevChat = await JSON.parse(prevChat);
       } catch (e) {
@@ -25,7 +24,6 @@ export default class Question {
       `CHATGPT:CHATS:${this.sender.user_id}`,
       JSON.stringify(prevChat)
     );
-    console.log(prevChat);
     return prevChat;
   }
 
