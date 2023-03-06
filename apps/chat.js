@@ -39,6 +39,7 @@ export class chatgpt extends plugin {
     });
 
     this.questionQueue = new QuestionQueue();
+    this.questionQueue.controller();
   }
 
   async getChats(e) {
@@ -130,21 +131,19 @@ export class chatgpt extends plugin {
 
     const job = await this.questionQueue.enQueue(question);
 
-    this.questionQueue.queue.count().then((count) => {
-      this.reply(
-        `I'm thinking of your question. There're ${count} questions to be thinked before your question.`,
-        true,
-        { recallMsg: 10 }
-      );
-    });
-    await this.questionQueue.queue.getWaitingCount().then((count)=>{
-      this.reply(`Waiting jobs: ${count}`, true, {recallMsg: 10})
-    })
-    await this.questionQueue.queue.getActiveCount().then((count)=>{
-      this.reply(`Active jobs: ${count}`, true, {recallMsg: 10})
-    })
+    const waitingCount = await this.questionQueue.queue.getWaitingCount();
 
-    await this.questionQueue.controller();
+    const activeCount = await this.questionQueue.queue.getActiveCount();
+
+    this.reply(
+      `I'm thinking of your question.\n` +
+        `Waiting jobs: ${waitingCount}\n` +
+        `Active jobs: ${activeCount}`,
+      true,
+      { recallMsg: 10 }
+    );
+
+    // await this.questionQueue.controller();
 
     await job.finished().then(async (response) => {
       this.callback(e, response);

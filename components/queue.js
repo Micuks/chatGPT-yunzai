@@ -17,7 +17,7 @@ export default class QuestionQueue {
 
   async controller() {
     this.queue.process(async (job) => {
-      return this.askAndReply(job);
+      return await this.askAndReply(job);
     });
   }
 
@@ -26,8 +26,6 @@ export default class QuestionQueue {
   }
 
   getChat = (job) => {
-    console.log("---job.data---")
-    console.log(job.data)
     return {
       systemMessage: `You are ChatGPT, a large language model trained by OpenAI. You answer as detailed as possible for each response. Your answer should be in Chinese by default. If you are generating a list, remember to have too many items. Current date: ${new Date().toISOString()}\n\n`,
       conversationId: job.data.prevChat.chat.conversationId,
@@ -38,8 +36,6 @@ export default class QuestionQueue {
   askAndReply = async (job) => {
     const question = await job.data.question;
     const chat = this.getChat(job);
-    console.log("---chat---");
-    console.log(chat);
     try {
       const res = await this.chatGPTAPI.sendMessage(question, chat);
       logger.info(`Get response text: ${res.text}`);

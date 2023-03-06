@@ -8,7 +8,7 @@ export default class Question {
     let prevChat = await redis.get(`CHATGPT:CHATS:${this.sender.user_id}`);
     if (!prevChat) {
       logger.info(
-        `No previous chats of ${question.sender.username}[${question.sender.user_id}]`
+        `No previous chats of ${this.sender.username}[${this.sender.user_id}]`
       );
       prevChat = this.createNewPrevChat();
     } else {
@@ -26,7 +26,6 @@ export default class Question {
     );
     return prevChat;
   }
-
 
   createNewPrevChat = () => {
     let ctime = new Date();
