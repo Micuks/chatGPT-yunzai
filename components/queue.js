@@ -52,17 +52,20 @@ export default class QuestionQueue {
     } catch (err) {
       logger.error(err);
       if (err.message.includes("conversationId")) {
-        await this.removeExpiredChat(job);
+        return {
+          text: `Your chat is expired. I've removed your chat for you.`,
+          conversationId: undefined,
+          id: undefined,
+        };
+      } else {
+        return {
+          text:
+            `An error occurred while answering this question. please again try later.\n` +
+            `${err.message.slice(0, 50)}\n`,
+          conversationId: chat?.conversationId,
+          id: chat?.parentMessageId,
+        };
       }
-
-      let res = {
-        text:
-          `An error occurred while answering this question. please again try later.\n` +
-          `${err.message.slice(0, 50)}\n`,
-        conversationId: chat?.conversationId,
-        id: chat?.parentMessageId,
-      };
-      return res;
     }
   };
 
