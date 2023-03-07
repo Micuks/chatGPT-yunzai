@@ -131,8 +131,8 @@ export class chatgpt extends plugin {
 
   async chat(e) {
     const question = new Question(e.msg.slice(1, e.msg.len), e.sender);
-    // question.prevChat = await question.getOrCreatePrevChat();
-    question.prevChat = await question.createNewPrevChat();
+    question.prevChat = await question.getOrCreatePrevChat();
+    // question.prevChat = await question.createNewPrevChat();
 
     const job = await this.questionQueue.enQueue(question);
 
@@ -140,13 +140,13 @@ export class chatgpt extends plugin {
 
     const activeCount = await this.questionQueue.queue.getActiveCount();
 
-    this.reply(
-      `I'm thinking of your question, ${e.sender.nickname}.\n` +
-        `Waiting jobs: ${waitingCount}\n` +
-        `Active jobs: ${activeCount}`,
-      true,
-    );
+    // this.reply(
+    //   `I'm thinking of your question, ${e.sender.nickname}.\n` +
+    //     `Waiting jobs: ${waitingCount}\n` +
+    //     `Active jobs: ${activeCount}`,
+    //   true,
     // { recallMsg: 10 },
+    // );
     logger.info(
       `Waiting jobs: ${waitingCount}\n` + `Active jobs: ${activeCount}`,
     );

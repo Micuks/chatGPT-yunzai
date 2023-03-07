@@ -12,9 +12,6 @@ const API_ACCESS_TOKEN = ""; // Fill in if you use unofficial reverse proxy solu
 const MODEL_PAID = false; // true if you subscribed ChatGPT plus and
 // use unofficial reverse proxy solution
 
-const CAPTCHA_TOKEN = ""; // (deprecated) Used by browser based solution.
-const NOPECHA_TOKEN = ""; // (deprecated) Used by browser based solution.
-
 export const Config = {
   modelName: MODEL_NAME,
   modelPaid: MODEL_PAID,
@@ -23,8 +20,6 @@ export const Config = {
   token: SESSION_TOKEN,
   proxy: PROXY,
   api_key: API_KEY,
-  captchaToken: CAPTCHA_TOKEN,
-  nopechaKey: NOPECHA_TOKEN,
   apiReverseProxyUrl: API_REVERSE_PROXY_URL,
   usePicture: false,
 };
