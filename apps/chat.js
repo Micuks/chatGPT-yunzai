@@ -140,13 +140,13 @@ export class chatgpt extends plugin {
 
     const activeCount = await this.questionQueue.queue.getActiveCount();
 
-    // this.reply(
-    //   `I'm thinking of your question, ${e.sender.nickname}.\n` +
-    //     `Waiting jobs: ${waitingCount}\n` +
-    //     `Active jobs: ${activeCount}`,
-    //   true,
-    // { recallMsg: 10 },
-    // );
+    this.reply(
+      `I'm thinking of your question, ${e.sender.nickname}.\n` +
+        `Waiting jobs: ${waitingCount}\n` +
+        `Active jobs: ${activeCount}`,
+      true,
+      { recallMsg: 10 },
+    );
     logger.info(
       `Waiting jobs: ${waitingCount}\n` + `Active jobs: ${activeCount}`,
     );
