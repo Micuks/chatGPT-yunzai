@@ -79,13 +79,15 @@ const fetchWithProxyForChatGPTAPI = async (url, options = {}) => {
 };
 
 const fetchWithProxyForUnofficialProxyAPI = async (url, options = {}) => {
-  return fetch(url, {
+  const proxyServer = Config.proxy;
+  return nodeFetch(url, {
     ...options,
     headers: {
       ...options.headers,
-      "keep-alive": "timeout=360",
+      // "keep-alive": "timeout=360",
       accept: "text/event-stream",
     },
     keepalive: true,
+    agent: proxy(proxyServer),
   });
 };
