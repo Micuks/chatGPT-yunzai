@@ -120,6 +120,7 @@ npm run start
 The sections in `config.js` are described here.
 
 | Key | Description |
+|---|---|
 | USE_UNOFFICIAL | `true` to use unofficial version, `false` to use official version |
 | PROXY | Fill in your proxy url. For example, `http://127.0.0.1:7890` |
 | MODEL_NAME| The model you want to use. Need not to modify by default |
