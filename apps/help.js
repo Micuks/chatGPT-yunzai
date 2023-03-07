@@ -39,7 +39,8 @@ export class help extends plugin {
 
   async help(e) {
     await this.reply(
-      `Ask question: ?Question\nGet chats statistics: #聊天列表\nDestroy your chat: #结束对话`,
+      `Ask question: ?Question\n` + `Continuous Chatting: !Question\n` +
+        `Get chats statistics: #聊天列表\n` + `Destroy your chat: #结束对话`,
     );
   }
 }
