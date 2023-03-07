@@ -3,8 +3,8 @@
 > 使用openAI官方API或反向代理非官方API的Yunzai-Bot(v3)的chatGPT插件.
 
 - [Usage](#Usage)
-    - [Official version](#usage---officialchatgpt)
-    - [Unofficial version](#usage---unofficialchatgpt)
+    - [Official version](#usage---official-chatgpt)
+    - [Unofficial version](#usage---unofficial-chatgpt)
 - [Config](#config)
 - [Help](#help)
 
@@ -72,7 +72,7 @@ npm run start
 ```
 ![example](./docs/example.png)
 
-### Unofficial ChatGPT
+### Usage - Unofficial ChatGPT
 
 1. Clone this reposity into `plugins/` folder in your Yunzai-Bot folder.
 ```bash
