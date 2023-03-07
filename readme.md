@@ -5,6 +5,29 @@
 
 ## Usage
 
+To use this plugin for Yunzai-Bot, you need to pick between these two methods.
+
+| Method | Cost | Quality |  
+|---|---|---|
+|`Official version`| OpenAI Credits | Best |
+|`Unofficial version` | Free | Rate limit; Not so robust |
+
+1. `Official version` - Uses the OpenAI official `gpt-3.5-turbo` ( or
+   `gpt-3.5-turbo-0301`, you can specify in `config.js` ) model. It's rubust,
+   but not free.
+2. `Unofficial version` - Uses an unofficial reverse proxy server to access
+   ChatGPT. It has a rate limit, and **exposes your access token to a third
+   party**, and not so robust. But **it's free**.
+
+**Note**: I recommend you to use official version for it has OpenAI's
+guarantee for service quality. If you have problems when using this plugin,
+please [Open an issue](https://github.com/Micuks/chatGPT-yunzai/issues).
+
+### Official ChatGPTAPI
+
+0. Sign up for an [OpenAI API Key](https://platform.openai.com/overview), this is
+needed later.
+
 1. Clone this reposity into `plugins/` folder in your Yunzai-Bot folder.
 ```bash
 cd Yunzai-Bot
@@ -25,6 +48,7 @@ cp config.default.js config.js
 # In chatGPT-yunzai folder
 pnpm update
 # or npm update if you use npm instead.
+# or npm install chatgpt bull
 ```
 
 5. Run Yunzai-Bot, ask questions!
@@ -41,4 +65,12 @@ npm run start
 
 ## Help
 
-Send '#chatgpt帮助' or '#chatgpthelp' to get help in QQ.
+This plugin has following features:
+
+| Pattern | Description | Permission |
+|---|---|---|
+| #chatgpt帮助 or #chatgpthelp | Show plugin's help info | Everyone |
+| #聊天列表 | Show all chats available | Master |
+| #结束对话 | Let ChatGPT forget this chat and create a new chat | Everyone |
+| ?Question or !Question | Ask ChatGPT a question. Remember to use `?` and `!`,
+not `？` and `！` |
