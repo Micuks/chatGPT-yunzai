@@ -14,7 +14,9 @@ export function initAPI() {
   let chatGPTAPI = null;
 
   if (Config.useUnofficial) {
-    // settings.debug = true;
+    if (Config.proxy) {
+      settings.fetch = fetchWithProxyForUnofficialProxyAPI;
+    }
     if (Config.apiReverseProxyUrl.length) {
       settings.apiReverseProxyUrl = Config.apiReverseProxyUrl;
     }
@@ -35,7 +37,7 @@ export function initAPI() {
     chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
   } else {
     if (Config.proxy) {
-      settings.fetch = fetchBehindProxy;
+      settings.fetch = fetchWithProxyForChatGPTAPI;
     }
     if (Config.modelName.len) {
       settings.completionParams = {
@@ -64,7 +66,7 @@ export const isBlocked = (message) => {
   return blockWord;
 };
 
-const fetchBehindProxy = (url, options = {}) => {
+const fetchWithProxyForChatGPTAPI = async (url, options = {}) => {
   const proxyServer = Config.proxy;
   const defaultOptions = {
     agent: proxy(proxyServer),
@@ -74,4 +76,16 @@ const fetchBehindProxy = (url, options = {}) => {
     ...options,
   };
   return nodeFetch(url, mergedOptions);
+};
+
+const fetchWithProxyForUnofficialProxyAPI = async (url, options = {}) => {
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      "keep-alive": "timeout=360",
+      accept: "text/event-stream",
+    },
+    keepalive: true,
+  });
 };
