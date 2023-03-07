@@ -2,6 +2,8 @@
 > ChatGPT plugin for Yunzai-Bot with official OpenAI API or unofficial OpenAI API with reverse proxy.
 > 使用openAI官方API或反向代理非官方API的Yunzai-Bot(v3)的chatGPT插件.
 
+中文简介在[这里](./readme-zh.md)
+
 - [Usage](#Usage)
     - [Official version](#usage---official-chatgpt)
     - [Unofficial version](#usage---unofficial-chatgpt)
@@ -29,7 +31,7 @@ Both methods can memory your chat history.
 guarantee for service quality. If you have problems when using this plugin,
 please [Open an issue](https://github.com/Micuks/chatGPT-yunzai/issues).
 
-**About proxy**: If you want to set proxy and other things, refer to [#Config]
+**About proxy**: If you want to set proxy and other things, refer to (#Config)
 section.
 
 ### Usage - Official ChatGPT
