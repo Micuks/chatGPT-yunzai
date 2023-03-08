@@ -15,6 +15,7 @@ export function initAPI() {
 
   if (Config.useUnofficial) {
     if (Config.proxy) {
+      logger.info(`Using proxy ${Config.proxy} for unofficial API`);
       settings.fetch = fetchWithProxyForUnofficialProxyAPI;
     }
     if (Config.apiReverseProxyUrl.length) {
@@ -37,6 +38,7 @@ export function initAPI() {
     chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
   } else {
     if (Config.proxy) {
+      logger.info(`Using proxy ${Config.proxy} for unofficial API`);
       settings.fetch = fetchWithProxyForChatGPTAPI;
     }
     if (Config.modelName.len) {
