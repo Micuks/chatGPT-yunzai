@@ -66,7 +66,7 @@ export const isBlocked = (message) => {
   return blockWord;
 };
 
-const fetchWithProxyForChatGPTAPI = async (url, options = {}) => {
+const fetchWithProxyForChatGPTAPI = (url, options = {}) => {
   const proxyServer = Config.proxy;
   const defaultOptions = {
     agent: proxy(proxyServer),
@@ -78,7 +78,7 @@ const fetchWithProxyForChatGPTAPI = async (url, options = {}) => {
   return nodeFetch(url, mergedOptions);
 };
 
-const fetchWithProxyForUnofficialProxyAPI = async (url, options = {}) => {
+const fetchWithProxyForUnofficialProxyAPI = (url, options = {}) => {
   const proxyServer = Config.proxy;
   return nodeFetch(url, {
     ...options,

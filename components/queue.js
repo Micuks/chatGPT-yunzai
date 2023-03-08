@@ -56,14 +56,16 @@ export default class QuestionQueue {
           text: `Your chat is expired. I've removed your chat for you.`,
           conversationId: undefined,
           id: undefined,
+          error: "Chat expired.",
         };
       } else {
         return {
           text:
             `An error occurred while answering this question. please again try later.\n` +
-            `${err.message.slice(0, 50)}\n`,
+            `${err.message.split("\n")[0]}\n`,
           conversationId: chat?.conversationId,
           id: chat?.parentMessageId,
+          error: '${err.message.split("\n")[0]}',
         };
       }
     }

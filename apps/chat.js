@@ -170,10 +170,15 @@ export class chatgpt extends plugin {
   async updateChat(e, res) {
     let prevChat = await redis.get(`CHATGPT:CHATS:${e.sender.user_id}`);
     prevChat = await JSON.parse(prevChat);
-    let chat = {
-      conversationId: res?.conversationId,
-      parentMessageId: res?.id,
-    };
+    let chat = res.error
+      ? {
+        conversationId: undefined,
+        parentMessageId: undefined,
+      }
+      : {
+        conversationId: res?.conversationId,
+        parentMessageId: res?.id,
+      };
     prevChat = {
       sender: e.sender,
       chat: chat,
