@@ -138,4 +138,5 @@ This plugin has following features:
 | #chatgpt帮助 or #chatgpthelp | Show plugin's help info | Everyone |
 | #聊天列表 | Show all chats available | Master |
 | #结束对话 | Let ChatGPT forget this chat and create a new chat | Everyone |
-| ?Question or !Question | Ask ChatGPT a question. Remember to use `?` and `!`, not `？` and `！` | Everyone |
+| ?Question | Ask ChatGPT a question. Remember to use `?`, not `？` | Everyone |
+| !Question | Continuous Chat, not `！` | Everyone |
