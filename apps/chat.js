@@ -157,14 +157,14 @@ export class chatgpt extends plugin {
     // await this.questionQueue.controller();
 
     await job.finished().then(async (response) => {
-      this.callback(e, response);
+      await this.callback(e, response);
     });
   }
 
   async callback(e, response) {
     this.e = e;
-    this.reply(response.text, true);
-    this.updateChat(e, response);
+    await this.reply(response.text, true);
+    await this.updateChat(e, response);
   }
 
   async updateChat(e, res) {

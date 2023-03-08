@@ -16,13 +16,13 @@ export default class QuestionQueue {
   };
 
   async controller() {
-    this.queue.process(async (job) => {
+    await this.queue.process(1, async (job) => {
       return await this.askAndReply(job);
     });
   }
 
   async removeJob(job) {
-    job.remove();
+    await job.remove();
   }
 
   getChat = (job) => {
