@@ -1,6 +1,6 @@
 import Bull from "bull";
 // import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
-import { initAPI, isBlocked, isChatExpired } from "./utils.js";
+import { initAPI, isBlocked } from "./utils.js";
 // import Question from "./question.js";
 
 const chatGPTAPI = initAPI();
@@ -11,12 +11,12 @@ export default class QuestionQueue {
     this.chatGPTAPI = chatGPTAPI;
   }
 
-  enQueue = async (question) => {
-    return await this.queue.add(question, { timeout: 60000 });
+  enQueue = (question) => {
+    return this.queue.add(question, { timeout: 60000 });
   };
 
-  async controller() {
-    await this.queue.process(1, async (job) => {
+  controller() {
+    this.queue.process(1, async (job) => {
       return await this.askAndReply(job);
     });
   }

@@ -3,7 +3,8 @@ import plugin from "../../../lib/plugins/plugin.js";
 import QuestionQueue from "../components/queue.js";
 import Question from "../components/question.js";
 
-const blockWords = ["Block1", "Block2", "Block3"];
+const questionQueue = new QuestionQueue();
+questionQueue.controller();
 
 export class chatgpt extends plugin {
   constructor() {
@@ -41,8 +42,8 @@ export class chatgpt extends plugin {
       ],
     });
 
-    this.questionQueue = new QuestionQueue();
-    this.questionQueue.controller();
+    this.questionQueue = questionQueue;
+    // this.questionQueue.controller();
   }
 
   async getChats(e) {
@@ -134,8 +135,6 @@ export class chatgpt extends plugin {
     question.prevChat = e.msg[0] == "?"
       ? await question.createNewPrevChat()
       : await question.getOrCreatePrevChat();
-    // question.prevChat = await question.getOrCreatePrevChat();
-    // question.prevChat = await question.createNewPrevChat();
 
     const job = await this.questionQueue.enQueue(question);
 
