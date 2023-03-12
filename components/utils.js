@@ -16,7 +16,7 @@ export function initAPI() {
   if (Config.useUnofficial) {
     if (Config.proxy) {
       logger.info(`Using proxy ${Config.proxy} for unofficial API`);
-      settings.fetch = fetchWithProxyForUnofficialProxyAPI;
+      settings.fetch = fetchWithProxyForChatGPTAPI;
     }
     if (Config.apiReverseProxyUrl.length) {
       settings.apiReverseProxyUrl = Config.apiReverseProxyUrl;
@@ -78,18 +78,4 @@ const fetchWithProxyForChatGPTAPI = (url, options = {}) => {
     ...options,
   };
   return nodeFetch(url, mergedOptions);
-};
-
-const fetchWithProxyForUnofficialProxyAPI = (url, options = {}) => {
-  const proxyServer = Config.proxy;
-  return nodeFetch(url, {
-    ...options,
-    headers: {
-      ...options.headers,
-      // "keep-alive": "timeout=360",
-      accept: "text/event-stream",
-    },
-    keepalive: true,
-    agent: proxy(proxyServer),
-  });
 };
