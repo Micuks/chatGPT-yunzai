@@ -2,11 +2,22 @@
 > 带有官方 OpenAI API 或带有反向代理的非官方 OpenAI API 的 Yunzai-Bot 的 ChatGPT 插件。
 > 使用openAI官方API或反向代理非官方API的Yunzai-Bot(v3)的chatGPT插件。
 
+- [更新](#更新)
 - [用法](#用法)
      - [官方版](#用法---官方-chatgpt)
      - [非官方版本](#用法---非官方-chatgpt)
 - [配置](#配置)
 - [帮助](#帮助)
+
+## 更新
+更新于 2022 年 3 月 15 日：GPT-4 模型
+
+OpenAI 刚刚发布的 GPT-4 模型现已在此插件的Unofficial版本下得到支持。
+
+要使用这个全新的模型，请确保您在 ChatGPT Plus 计划中。更多详细信息，请参考[非官方版本](#用法---非官方-chatgpt)，将您的 config.js 与更新后的 config.default.js 同步，并将 `USE_UNOFFICIAL` 和 `USE_GPT4` 设置为 true。
+
+![gpt4-qq](docs/gpt4-qq.png)
+![gpt4-web](docs/gpt4-web.png)
 
 ## 用法
 
