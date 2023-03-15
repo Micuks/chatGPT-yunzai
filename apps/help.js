@@ -42,11 +42,9 @@ export class help extends plugin {
     await this.reply(
       `Ask question: ?Question\n` +
         `Continuous Chatting: !Question\n` +
-        (config.useGpt4)
-        ? `**Chat with GPT-4**: 4Question\n`
-        : `` +
-          `Get chats statistics: #聊天列表\n` +
-          `Destroy your chat: #结束对话`,
+        ((Config.useGpt4) ? `**Chat with GPT-4**: 4Question\n` : ``) +
+        `Get chats statistics: #聊天列表\n` +
+        `Destroy your chat: #结束对话`,
     );
   }
 }
