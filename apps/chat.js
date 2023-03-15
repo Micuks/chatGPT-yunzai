@@ -15,7 +15,7 @@ export class chatgpt extends plugin {
       priority: 1500,
       rule: [
         {
-          reg: "^[\\s]*(\\?|!)[\\s\\S]*",
+          reg: "^[\\s]*(\\?|!|4)[\\s\\S]*",
           fnc: "chat",
         },
         {
@@ -131,10 +131,24 @@ export class chatgpt extends plugin {
   }
 
   async chat(e) {
-    const question = new Question(e.msg.slice(1, e.msg.len), e.sender);
+    const question = new Question(e.msg, e.sender);
     question.prevChat = e.msg[0] == "?"
       ? await question.createNewPrevChat()
       : await question.getOrCreatePrevChat();
+    switch (e.msg[0]) {
+      case "?":
+        question.prevChat = await question.createNewPrevChat();
+        break;
+      case "!":
+        question.prevChat = await question.getOrCreatePrevChat();
+        break;
+      case "4":
+        question.prevChat = await question.getOrCreatePrevChat();
+        break;
+
+      default:
+        break;
+    }
 
     const job = await this.questionQueue.enQueue(question);
 

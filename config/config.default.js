@@ -10,6 +10,7 @@ const API_REVERSE_PROXY_URL = "https://bypass.duti.tech/api/conversation"; // (O
 
 const API_ACCESS_TOKEN = ""; // Fill in if you use unofficial reverse proxy solution
 const MODEL_PAID = false; // true if you subscribed ChatGPT plus and
+const USE_GPT4 = false; // true if you subscribed and want to use GPT-4
 // use unofficial reverse proxy solution
 
 export const Config = {
@@ -22,4 +23,5 @@ export const Config = {
   api_key: API_KEY,
   apiReverseProxyUrl: API_REVERSE_PROXY_URL,
   usePicture: false,
+  useGpt4: USE_GPT4,
 };

@@ -1,7 +1,6 @@
 import Bull from "bull";
-// import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
 import { initAPI, isBlocked } from "./utils.js";
-// import Question from "./question.js";
+import { Config } from "../config/config.js";
 
 const chatGPTAPI = initAPI();
 
@@ -37,7 +36,11 @@ export default class QuestionQueue {
   };
 
   askAndReply = async (job) => {
-    const question = await job.data.question;
+    let question = await job.data.question;
+    const model = this.setModel(question);
+    this.chatGPTAPI._debug = true;
+    this.chatGPTAPI._model = model;
+    question = question.slice(1, question.len);
     const chat = this.getChat(job);
     try {
       logger.info(`Current question: ${question}`);
@@ -69,6 +72,18 @@ export default class QuestionQueue {
         };
       }
     }
+  };
+
+  setModel = (question) => {
+    let model = "";
+    if (question[0] == "4" && Config.useGpt4) {
+      model = "gpt-4";
+    } else if (Config.modelPaid) {
+      model = "text-davinci-002-render-paid";
+    } else {
+      model = "text-davinci-002-render-sha";
+    }
+    return model;
   };
 
   getUserSetting = async () => {

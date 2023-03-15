@@ -26,13 +26,13 @@ export function initAPI() {
     // Set model to be paid or free.
     if (Config.modelPaid) {
       logger.info("Use paid model. Wish you were in ChatGPT plus plan!");
-      settings.completionParams = {
-        model: "text-davinci-002-render-paid",
-      };
+      if (Config.useGpt4) {
+        logger.info("GPT-4 enabled. Wish you were in ChatGPT plus plan!");
+      } else {
+        settings.model = "text-davinci-002-render-paid";
+      }
     } else {
-      settings.completionParams = {
-        model: "text-davinci-002-render-sha",
-      };
+      settings.model = "text-davinci-002-render-sha";
     }
 
     chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
