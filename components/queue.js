@@ -38,7 +38,6 @@ export default class QuestionQueue {
   askAndReply = async (job) => {
     let question = await job.data.question;
     const model = this.setModel(question);
-    this.chatGPTAPI._debug = true;
     this.chatGPTAPI._model = model;
     question = question.slice(1, question.len);
     const chat = this.getChat(job);
