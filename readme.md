@@ -10,6 +10,14 @@
 - [Config](#config)
 - [Help](#help)
 
+## Update
+
+### Updated at 3/15/2022: GPT-4 model
+
+The GPT-4 model just released by OpenAI is now supported **UNDER UNOFFICIAL VERSION**. 
+
+To use this brand new model, make sure that **You are in ChatGPT Plus Plan**. For more details, please refer to [Unofficial version](#usage--unofficial-chatgpt), sync your `config.js` up with the updated `config.default.js`, and set the `USE_UNOFFICIAL` and `USE_GPT4` to true.
+
 ## Usage
 
 To use this plugin for Yunzai-Bot, you need to pick between these two methods.
