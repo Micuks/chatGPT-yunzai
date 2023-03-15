@@ -49,32 +49,32 @@ OpenAI 刚刚发布的 GPT-4 模型现已在此插件的Unofficial版本下得�
 以后需要。
 
 1. 将此存储库克隆到 Yunzai-Bot 文件夹中的 `plugins/` 文件夹中。
-```狂欢
-cd 云在-Bot
-光盘插件
+```bash
+cd Yunzai-Bot
+cd plugins
 git clone https://github.com/Micuks/chatGPT-yunzai.git
 ```
 
 2. 复制 `config.default.js` 并在 config 文件夹中将其重命名为 `config.js`。
-```狂欢
-光盘配置
-cp config.default.js 配置.js
+```bash
+cd config
+cp config.default.js config.js
 ```
 
 3. 将您的 OpenAI API 密钥填写到 `config.js` 中的 `API_KEY` 部分，可以通过您的 OpenAI 帐户在 [查看您的 API 密钥](https://platform.openai.com/account/api-keys ).
 
 4.更新依赖使用pnpm或npm。
-```狂欢
+```bash
 # 在chatGPT-yunzai文件夹下
-pnpm更新
+pnpm update
 # 或者 npm update 如果你改用 npm。
 # 或者 npm 安装 chatgpt bull
 ```
 
 5.运行Yunzai-Bot，提问！
-```狂欢
+```bash
 # 在Yunzai-Bot根目录下
-npm 运行开始
+npm run start
 ```
 
 ```
@@ -86,9 +86,9 @@ npm 运行开始
 ### 用法 - 非官方 ChatGPT
 
 1. 将此存储库克隆到 Yunzai-Bot 文件夹中的 `plugins/` 文件夹中。
-```狂欢
-cd 云在-Bot
-光盘插件
+```bash
+cd Yunzai-Bot
+cd plugins
 git clone https://github.com/Micuks/chatGPT-yunzai.git
 ```
 
@@ -96,21 +96,21 @@ git clone https://github.com/Micuks/chatGPT-yunzai.git
 而不是 OpenAI API 密钥。 为此，我为您提供了一个 python 脚本
 `get_access_token.py`。 确保你已经安装了 **python3**。 然后安装
 获取访问令牌的要求。
-```狂欢
+```bash
 pip install -r requirements.txt
-pnpm更新
-pnpm 安装 chatgpt bull
+pnpm update
+pnpm install chatgpt bull
 ```
 
 3. 复制 `config.default.js` 并在 config 文件夹中将其重命名为 `config.js`。
-```狂欢
-光盘配置
-cp config.default.js 配置.js
+```bash
+cd config
+cp config.default.js config.js
 ```
 
 4.运行
-以下命令获取访问令牌。
-```狂欢
+以下命令获取访问令牌(access token)。
+```config
 python3 get_access_token.py
 # 填写你的OpenAI邮箱和密码，然后复制你之前的access token
 给出。
@@ -119,9 +119,9 @@ python3 get_access_token.py
 然后将访问令牌粘贴到 config.js 中的 API_ACCESS_TOKEN 部分。
 
 6.运行Yunzai-Bot，提问！
-```狂欢
+```bash
 # 在Yunzai-Bot根目录下
-npm 运行开始
+npm run start
 ```
 
 ## 配置
@@ -149,3 +149,4 @@ npm 运行开始
 | #结束对话 | 让 ChatGPT 忘记这个聊天并创建一个新聊天 | 所有人 |
 | ?问题 | 向 ChatGPT 提问。 记得使用 `?`，而不是 `？` | 所有人 |
 | !问题 | 持续对话, 注意不是 `！` | 所有人 |
+| 4问题 | 向GPT-4提问 | 所有人 |
