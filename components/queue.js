@@ -11,7 +11,9 @@ export default class QuestionQueue {
   }
 
   enQueue = (question) => {
-    return this.queue.add(question, { timeout: 60000 });
+    return this.queue.add(question, {
+      timeout: (Config.useGpt4) ? 120000 : 60000,
+    });
   };
 
   controller() {
