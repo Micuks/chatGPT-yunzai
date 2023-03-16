@@ -17,11 +17,12 @@
 The GPT-4 model just released by OpenAI is now supported **UNDER UNOFFICIAL VERSION**. 
 
 To use this brand new model, make sure that **You are in ChatGPT Plus Plan**. For more details, please refer to [Unofficial version](#usage--unofficial-chatgpt), sync your `config.js` up with the updated `config.default.js`, and set the `USE_UNOFFICIAL` and `USE_GPT4` to true.
-![gpt4-qq](docs/gpt4-qq)
+
+![gpt4-qq](docs/gpt4-qq.png)
 
 The actual request and response can be seen at ChatGPT website directly due to we are using Unofficial version.
 
-![gpt4-web](docs/gpt4-web)
+![gpt4-web](docs/gpt4-web.png)
 
 ## Usage
 
