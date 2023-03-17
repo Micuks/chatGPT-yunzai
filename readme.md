@@ -114,7 +114,7 @@ cp config.default.js config.js
 ```
 
 4. run the
-following commands to get access token.
+following commands to get access token. Or get access token from [here](https://chat.openai.com/api/auth/session) directly.
 ```bash
 python3 get_access_token.py
 # Fill in your OpenAI email and password, then copy the access token you were
