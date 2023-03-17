@@ -142,6 +142,7 @@ The sections in `config.js` are described here.
 | API_REVERSE_PROXY_URL | Unofficial ChatGPT reverse proxy server. If you don't know what this is, keep it blank. |
 | API_ACCESS_TOKEN | This is necessary if you use unofficial version |
 | MODEL_PAID | If you use **unofficial** and subscribed **ChatGPT Plus**, set this to `true` |
+|USE_GPT4 | `true` to use **GPT-4**  in **unofficial version** |
 
 ## Help
 
