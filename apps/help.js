@@ -1,27 +1,6 @@
 import plugin from "../../../lib/plugins/plugin.js";
 import { Config } from "../config/config.js";
 
-let helpData = [
-  {
-    group: "Chat",
-    list: [
-      {
-        title: "?Question",
-        desc: "Chat with me",
-      },
-    ],
-  },
-  {
-    group: "Manage",
-    list: [
-      {
-        title: "#聊天列表",
-        desc: "Get chat list",
-      },
-    ],
-  },
-];
-
 export class help extends plugin {
   constructor(e) {
     super({
