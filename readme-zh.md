@@ -137,6 +137,7 @@ npm run start
 | API_REVERSE_PROXY_URL | 非官方的 ChatGPT 反向代理服务器。 如果您不知道这是什么，请将其留空。 |
 | API_ACCESS_TOKEN | 如果您使用非官方版本，这是必需的 |
 | MODEL_PAID | 如果您使用 **非官方** 并订阅了 **ChatGPT Plus**，请将其设置为 `true` |
+|USE_GPT4 | `true` 来使用 **GPT-4**, 在 **非官方版本**下 |
 
 ## 帮助
 
