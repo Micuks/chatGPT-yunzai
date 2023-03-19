@@ -13,11 +13,12 @@ export function initAPI() {
 
   let chatGPTAPI = null;
 
+  if (Config.proxy) {
+    logger.info(`Using proxy ${Config.proxy} for ChatGPT`);
+    settings.fetch = fetchWithProxyForChatGPTAPI;
+  }
+
   if (Config.useUnofficial) {
-    if (Config.proxy) {
-      logger.info(`Using proxy ${Config.proxy} for unofficial API`);
-      settings.fetch = fetchWithProxyForChatGPTAPI;
-    }
     if (Config.apiReverseProxyUrl.length) {
       settings.apiReverseProxyUrl = Config.apiReverseProxyUrl;
     }
@@ -37,10 +38,6 @@ export function initAPI() {
 
     chatGPTAPI = new ChatGPTUnofficialProxyAPI(settings);
   } else {
-    if (Config.proxy) {
-      logger.info(`Using proxy ${Config.proxy} for official API`);
-      settings.fetch = fetchWithProxyForChatGPTAPI;
-    }
     if (Config.modelName.len) {
       settings.completionParams = {
         model: Config.modelName,

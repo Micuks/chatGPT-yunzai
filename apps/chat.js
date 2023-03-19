@@ -72,11 +72,11 @@ export class chatgpt extends plugin {
     if (atMessages.length === 0) {
       let chat = await redis.get(`CHATGPT:CHATS:${e.sender.user_id}`);
       if (!chat) {
-        await this.reply("No chats currently", true);
+        await this.reply("You are not chatting with me.", true);
       } else {
         await redis.del(`CHATGPT:CHATS:${e.sender.user_id}`);
         await this.reply(
-          'Destroyed current chat, input "?QUestion" to start new chat.',
+          "Chat destroyed.",
           true,
         );
       }

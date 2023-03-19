@@ -31,7 +31,7 @@ export default class QuestionQueue {
       systemMessage:
         `You are ChatGPT, a large language model trained by OpenAI. You answer as detailed as possible for each response. Your answer should be in Chinese by default. If you are generating a list, remember to have too many items. Current date: ${
           new Date().toISOString()
-        }\n\n`,
+        }. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\n\n`,
       conversationId: job.data.prevChat.chat?.conversationId,
       parentMessageId: job.data.prevChat.chat?.parentMessageId,
     };
