@@ -2,6 +2,7 @@
 import plugin from "../../../lib/plugins/plugin.js";
 import QuestionQueue from "../components/queue.js";
 import Question from "../components/question.js";
+import { Config } from "../config/config.js";
 
 const questionQueue = new QuestionQueue();
 questionQueue.controller();
@@ -143,7 +144,14 @@ export class chatgpt extends plugin {
         question.prevChat = await question.getOrCreatePrevChat();
         break;
       case "4":
-        question.prevChat = await question.getOrCreatePrevChat();
+        if (!Config.useGpt4) {
+          this.reply(
+            `My GPT-4 model is not enabled. Please contact my master for assistance.`,
+          );
+          return;
+        } else {
+          question.prevChat = await question.getOrCreatePrevChat();
+        }
         break;
 
       default:
