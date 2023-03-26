@@ -2,6 +2,7 @@ export default class Question {
   constructor(question, sender) {
     this.question = question;
     this.sender = sender;
+    this.prevChat = undefined;
   }
 
   async getOrCreatePrevChat() {
@@ -41,6 +42,8 @@ export default class Question {
       count: 0,
       ctime: ctime,
       utime: ctime,
+      conversationId: undefined,
+      parentMessageId: undefined,
     };
   };
 }
