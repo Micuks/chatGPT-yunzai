@@ -1,3 +1,4 @@
+import { Bard } from "googlebard";
 import { Config } from "../config/config.js";
 import proxy from "https-proxy-agent";
 import nodeFetch from "node-fetch";
@@ -48,10 +49,42 @@ export function initAPI() {
     chatGPTAPI = new ChatGPTAPI(settings);
   }
 
-  redis.set("CHATGPT:API_SETTINGS", JSON.stringify(settings));
-
   return chatGPTAPI;
 }
+
+export const initBard = () => {
+  if (!Config.useBard) {
+    logger.info(`Bard is not enabled`);
+    return;
+  }
+
+  const setProxy = () => {
+    if (Config.proxy) {
+      logger.info(`Use proxy ${Config.proxy} for bard`);
+      const proxySlice = Config.proxy.split(":");
+      logger.info(proxySlice);
+      if (proxySlice.length === 3) {
+        return {
+          host: proxySlice[1].slice(2, proxySlice[1].length),
+          port: proxySlice[2],
+          protocol: "http",
+        };
+      } else if (proxySlice.length === 2) {
+        return {
+          host: proxySlice[0],
+          port: proxySlice[1],
+          protocol: "http",
+        };
+      }
+    }
+    return undefined;
+  };
+
+  const proxyParams = setProxy();
+  const params = { proxy: proxyParams };
+  logger.info(params);
+  return new Bard(Config.bardCookie, params);
+};
 
 export const isChatExpired = (date) => {
   const currTime = new Date();

@@ -16,7 +16,7 @@ export class chatgpt extends plugin {
       priority: 1500,
       rule: [
         {
-          reg: "^[\\s]*(\\?|!|4)[\\s\\S]*",
+          reg: "^[\\s]*(\\?|!|4|B)[\\s\\S]*",
           fnc: "chat",
         },
         {
@@ -37,7 +37,7 @@ export class chatgpt extends plugin {
           fnc: "txtMode",
         },
         {
-          reg: "#清除队列",
+          reg: "#(清除队列|清空队列)",
           fnc: "cleanQueue",
         },
       ],
@@ -145,8 +145,18 @@ export class chatgpt extends plugin {
         break;
       case "4":
         if (!Config.useGpt4) {
-          this.reply(
+          logger.info(
             `My GPT-4 model is not enabled. Please contact my master for assistance.`,
+          );
+          return;
+        } else {
+          question.prevChat = await question.getOrCreatePrevChat();
+        }
+        break;
+      case "B":
+        if (!Config.useBard) {
+          logger.info(
+            "My Bard is not enables. Please contact my master for assistance.",
           );
           return;
         } else {
@@ -172,7 +182,7 @@ export class chatgpt extends plugin {
       { recallMsg: 10 },
     );
     logger.info(
-      `Waiting jobs: ${waitingCount}\n` + `Active jobs: ${activeCount}`,
+      `Waiting jobs: ${waitingCount}, Active jobs: ${activeCount}`,
     );
 
     // await this.questionQueue.controller();
@@ -191,7 +201,7 @@ export class chatgpt extends plugin {
   async updateChat(e, res) {
     let prevChat = await redis.get(`CHATGPT:CHATS:${e.sender.user_id}`);
     prevChat = await JSON.parse(prevChat);
-    let chat = res.error
+    const chat = res.error
       ? {
         conversationId: undefined,
         parentMessageId: undefined,
@@ -216,6 +226,7 @@ export class chatgpt extends plugin {
 
   async cleanQueue(e) {
     this.questionQueue.queue.clean(5000, "active");
-    this.questionQueue.queue.clean(5000, "waiting");
+    this.questionQueue.queue.clean(5000, "wait");
+    logger.info("Successfully cleaned active job queue!");
   }
 }

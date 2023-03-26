@@ -13,6 +13,13 @@ const MODEL_PAID = false; // true if you subscribed ChatGPT plus and
 const USE_GPT4 = false; // true if you subscribed and want to use GPT-4
 // use unofficial reverse proxy solution
 
+// Google Bard settings
+const USE_BARD = false; // The master switch for Google Bard
+const BARD_COOKIE =
+  "__Secure-1PSIDCC=<**Fill in your __Secure-1PSIDCC cookie section**>";
+// Your bard cookie
+
+// You need not to modify the settings below
 export const Config = {
   modelName: MODEL_NAME,
   modelPaid: MODEL_PAID,
@@ -23,4 +30,6 @@ export const Config = {
   apiReverseProxyUrl: API_REVERSE_PROXY_URL,
   usePicture: false,
   useGpt4: USE_GPT4,
+  useBard: USE_BARD,
+  bardCookie: BARD_COOKIE,
 };

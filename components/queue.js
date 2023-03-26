@@ -1,13 +1,15 @@
 import Bull from "bull";
-import { initAPI, isBlocked } from "./utils.js";
+import { initAPI, initBard, isBlocked } from "./utils.js";
 import { Config } from "../config/config.js";
 
 const chatGPTAPI = initAPI();
+const bardAPI = initBard();
 
 export default class QuestionQueue {
   constructor() {
     this.queue = new Bull("questionQueue");
     this.chatGPTAPI = chatGPTAPI;
+    this.bardAPI = bardAPI;
   }
 
   enQueue = (question) => {
@@ -32,13 +34,42 @@ export default class QuestionQueue {
         `You are ChatGPT, a large language model trained by OpenAI. You answer as detailed as possible for each response. Your answer should be in Chinese by default. If you are generating a list, remember to have too many items. Current date: ${
           new Date().toISOString()
         }. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\n\n`,
-      conversationId: job.data.prevChat.chat?.conversationId,
-      parentMessageId: job.data.prevChat.chat?.parentMessageId,
+      conversationId: job.data.prevChat?.chat?.conversationId,
+      parentMessageId: job.data.prevChat?.chat?.parentMessageId,
     };
   };
 
   askAndReply = async (job) => {
-    let question = await job.data.question;
+    const question = job.data.question;
+    if (question[0] == "B") {
+      return await this.bardAskAndReply(job);
+    } else {
+      return await this.gptAskAndReply(job);
+    }
+  };
+
+  parseResponseError = (err) => {
+    if (err.message.includes("conversationId")) {
+      return {
+        text: `Your chat is expired. I've removed your chat for you.`,
+        conversationId: undefined,
+        id: undefined,
+        error: "Chat expired.",
+      };
+    } else {
+      return {
+        text:
+          `An error occurred while answering this question. please again try later.\n` +
+          `${err.message.split("\n")[0]}\n`,
+        conversationId: chat?.conversationId,
+        id: chat?.parentMessageId,
+        error: '${err.message.split("\n")[0]}',
+      };
+    }
+  };
+
+  gptAskAndReply = async (job) => {
+    let question = job.data.question;
     const model = this.setModel(question);
     this.chatGPTAPI._model = model;
     question = question.slice(1, question.len);
@@ -55,23 +86,33 @@ export default class QuestionQueue {
       return res;
     } catch (err) {
       logger.error(err);
-      if (err.message.includes("conversationId")) {
-        return {
-          text: `Your chat is expired. I've removed your chat for you.`,
-          conversationId: undefined,
-          id: undefined,
-          error: "Chat expired.",
-        };
-      } else {
-        return {
-          text:
-            `An error occurred while answering this question. please again try later.\n` +
-            `${err.message.split("\n")[0]}\n`,
-          conversationId: chat?.conversationId,
-          id: chat?.parentMessageId,
-          error: '${err.message.split("\n")[0]}',
-        };
-      }
+      return this.parseResponseError(err);
+    }
+  };
+
+  bardAskAndReply = async (job) => {
+    let question = job.data.question;
+    question = await question.slice(1, question.len);
+    const chat = this.getChat(job);
+    const conversationId = chat.conversationId
+      ? chat.conversationId
+      : job.data.sender.user_id;
+    try {
+      logger.info(
+        `Current Bard question: ${question}, Bard conversationId: ${conversationId}`,
+      );
+      // const text = await this.bardAPI.ask(question, conversationId);
+      const text = await this.bardAPI.ask(question);
+      logger.info(`Get response text: ${text}`);
+      const res = {
+        text: text,
+        conversationId: conversationId,
+        id: job.data?.parentMessageId,
+      };
+      return res;
+    } catch (err) {
+      logger.error(err);
+      return this.parseResponseError(err);
     }
   };
 
@@ -105,6 +146,6 @@ export default class QuestionQueue {
 
   async removeExpiredChat(expiredChat) {
     logger.info(`${expiredChat.data.prevChat.sender}'s chat expired.`);
-    expiredChat.remove();
+    await expiredChat.remove();
   }
 }
