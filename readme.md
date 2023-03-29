@@ -12,7 +12,7 @@
 
 ## Update
 
-### Updated at 3/15/2022: GPT-4 model
+### Updated at 3/15/2023: GPT-4 model
 
 The GPT-4 model just released by OpenAI is now supported **UNDER UNOFFICIAL VERSION**. 
 
