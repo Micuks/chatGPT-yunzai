@@ -1,6 +1,6 @@
 # 使用openAI API的Yunzai-Bot(v3)的chatGPT插件
 > 带有官方 OpenAI API 或带有反向代理的非官方 OpenAI API 的 Yunzai-Bot 的 ChatGPT 插件。
-> 使用openAI官方API或反向代理非官方API的Yunzai-Bot(v3)的chatGPT插件。
+> 使用openAI官方API或反向代理非官方API的[Yunzai-Bot](https://gitee.com/yoimiya-kokomi/Yunzai-Bot)(v3)的chatGPT插件。
 
 - [更新](#更新)
 - [用法](#用法)
@@ -21,7 +21,7 @@ OpenAI 刚刚发布的 GPT-4 模型现已在此插件的Unofficial版本下得�
 
 ## 用法
 
-要将此插件用于 Yunzai-Bot，您需要在这两种方法之间进行选择。
+要将此插件用于 [Yunzai-Bot](https://gitee.com/yoimiya-kokomi/Yunzai-Bot)，您需要在这两种方法之间进行选择。
 这两种方法都可以记住您的聊天记录。
 
 | 方法 | 费用 | 质量 |
