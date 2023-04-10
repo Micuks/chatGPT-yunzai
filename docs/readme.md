@@ -1,1 +1,1 @@
-Here's docs and figures for this plugin.
+Documentation and images used by the documentation are stored here.
