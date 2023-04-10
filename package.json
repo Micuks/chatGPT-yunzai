@@ -1,6 +1,6 @@
 {
 	"name": "chatgpt-plugin",
-	"version": "1.6.1",
+	"version": "1.6.2",
 	"description": "Plugin for Yunzai-bot",
 	"type": "module",
 	"author": "Louis Wu",

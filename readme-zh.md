@@ -173,7 +173,7 @@ cp config.default.js config.js
 
 这里是`config.json`中与Bard相关部分的设置.
 
-```json
+```javascript
 {
    // Google Bard 设置
    const USE_BARD = true; // Google Bard 的总开关

@@ -191,7 +191,7 @@ cp config.default.js config.js
 
 Here's the related config for GoogleBard in `config.json`.
 
-```json
+```javascript
 {
    // Google Bard settings
    const USE_BARD = true; // The master switch for Google Bard
