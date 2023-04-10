@@ -228,5 +228,6 @@ export class chatgpt extends plugin {
     this.questionQueue.queue.clean(5000, "active");
     this.questionQueue.queue.clean(5000, "wait");
     logger.info("Successfully cleaned active job queue!");
+    await e.reply("清空队列完毕");
   }
 }

@@ -98,14 +98,14 @@ export const isBlocked = (message) => {
   return blockWord;
 };
 
-const fetchWithProxyForChatGPTAPI = (url, options = {}) => {
+const fetchWithProxyForChatGPTAPI = async (url, options = {}) => {
   const proxyServer = Config.proxy;
   const defaultOptions = {
-    agent: proxy(proxyServer),
+    agent: new proxy(proxyServer),
   };
   const mergedOptions = {
     ...defaultOptions,
     ...options,
   };
-  return nodeFetch(url, mergedOptions);
+  return await nodeFetch(url, mergedOptions);
 };

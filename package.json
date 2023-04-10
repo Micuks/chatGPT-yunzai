@@ -7,7 +7,9 @@
 	"license": "MIT",
 	"dependencies": {
 		"bull": "^4.10.4",
-		"chatgpt": "^5.1.2",
+		"chatgpt": "^5.2.2",
 		"googlebard": "^1.0.4"
+		"http-proxy-agent": "^5.0.0",
+		"proxy-agent": "^5.0.0"
 	}
 }
