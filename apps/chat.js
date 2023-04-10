@@ -211,6 +211,7 @@ export class chatgpt extends plugin {
       utime: new Date(),
       ctime: prevChat?.ctime ? prevChat.ctime : new Date(),
       count: prevChat?.count + 1,
+      conversationId: res?.conversationId,
     };
 
     await redis.set(
@@ -228,7 +229,7 @@ export class chatgpt extends plugin {
         parentMessageId: undefined,
       }
       : {
-        conversationId: res?.conversationId,
+        conversationId: e.sender.user_id,
         parentMessageId: res?.id,
       };
     prevChat = {
@@ -237,6 +238,9 @@ export class chatgpt extends plugin {
       utime: new Date(),
       ctime: prevChat?.ctime ? prevChat.ctime : new Date(),
       count: prevChat?.count + 1,
+      conversationId: prevChat?.conversationId
+        ? prevChat.conversationId
+        : e.sender.user_id,
     };
 
     await redis.set(

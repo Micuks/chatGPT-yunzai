@@ -64,6 +64,8 @@ export default class Question {
       `CHATGPT:CHATS:${this.sender.user_id}`,
       JSON.stringify(prevChat),
     );
+
+    return prevChat;
   };
 
   async getOrCreatePrevChat(model = "ChatGPT") {

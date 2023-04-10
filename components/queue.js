@@ -77,7 +77,9 @@ export default class QuestionQueue {
     question = question.slice(1, question.len);
     const chat = this.getChat(job);
     try {
-      logger.info(`Current chatGPT question: ${question}`);
+      logger.info(
+        `Current chatGPT question: ${question}, current parentMessageId: ${chat.parentMessageId}`,
+      );
       const res = await this.chatGPTAPI.sendMessage(question, chat);
       logger.info(`Get response text: ${res.text}`);
 
