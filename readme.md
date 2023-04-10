@@ -12,11 +12,15 @@
 
 ## Update
 
-### Updated at 10/4/2023: Google Bard
+### Updated on 10/4/2023: Google Bard
 
 Now you can chat with **Google Bard** in QQ via Yunzai-Bot freely!
 
-### Updated at 3/15/2023: GPT-4 model
+![bard-qq](docs/bard-qq.png)
+
+To chat with GoogleBard, first you should sync your npm dependencies via `pnpm update -P`. Then sync your `config.js` up with the latest `config.default.js`, set the `USE_BARD` to true and fill in `BARD_COOKIE` with your bard cookie. You can find the detailed usage below.
+
+### Updated on 3/15/2023: GPT-4 model
 
 The GPT-4 model just released by OpenAI is now supported **UNDER UNOFFICIAL VERSION**. 
 
