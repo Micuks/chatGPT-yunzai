@@ -1,7 +1,10 @@
 # 使用 openAI API 的 Yunzai-Bot(v3)的 chatGPT 插件
 
-> ChatGPT plugin for [Yunzai-Bot](https://gitee.com/yoimiya-kokomi/Yunzai-Bot) with official OpenAI API or unofficial OpenAI API with reverse proxy.
-> 使用 openAI 官方 API 或反向代理非官方 API 的[Yunzai-Bot](https://gitee.com/yoimiya-kokomi/Yunzai-Bot)(v3)的 chatGPT 插件.
+> ChatGPT plugin for [Yunzai-Bot](https://gitee.com/yoimiya-kokomi/Yunzai-Bot)
+> with official OpenAI API or unofficial OpenAI API with reverse proxy. With
+> additional support to chat with [GoogleBard](bard.google.com).
+> 使用 openAI 官方 API 或反向代理非官方 API 的
+> [Yunzai-Bot](https://gitee.com/yoimiya-kokomi/Yunzai-Bot)(v3)的 chatGPT 插件. 也可以与[GoogleBard](bard.google.com)交谈.
 
 中文简介在[这里](./readme-zh.md)
 
@@ -20,7 +23,7 @@
 
 ### Updated on 10/4/2023: Google Bard
 
-Now you can chat with **Google Bard** in QQ via Yunzai-Bot freely!
+Now you can chat with [**Google Bard**](bard.google.com) in QQ via Yunzai-Bot freely!
 
 ![bard-qq](docs/bard-qq.png)
 
@@ -189,14 +192,15 @@ cp config.default.js config.js
 ```json
 {
 
-   ...
+   // ...
+
    // Google Bard settings
    const USE_BARD = true; // The master switch for Google Bard
    const BARD_COOKIE =
      "__Secure-1PSID=<**Fill in your __Secure-1PSID cookie section**>";
    // Your bard cookie. Remember **not to delete** the `__Secure-1PSID=` prefix
 
-   ...
+   // ...
 }
 ```
 
@@ -226,12 +230,12 @@ The sections in `config.js` are described here.
 
 This plugin has following features:
 
-| Feature | Command | Permission |
-| --- | --- | --- |
-| Seek ChatGPT help | #chatgpthelp | Everyone |
-| Ask a question | ?Question | Everyone |
-| Continuous Chatting | !Question | Everyone |
-| Chat with GPT-4 | 4Question | Everyone |
-| Chat with Google Bard | BQuestion | Everyone |
-| End current chat | #结束对话 | Everyone |
-| Get chat statistics [Administrator] | #聊天列表 | Master |
+| Feature                             | Command      | Permission |
+| ----------------------------------- | ------------ | ---------- |
+| Seek ChatGPT help                   | #chatgpthelp | Everyone   |
+| Ask a question                      | ?Question    | Everyone   |
+| Continuous Chatting                 | !Question    | Everyone   |
+| Chat with GPT-4                     | 4Question    | Everyone   |
+| Chat with Google Bard               | BQuestion    | Everyone   |
+| End current chat                    | #结束对话    | Everyone   |
+| Get chat statistics [Administrator] | #聊天列表    | Master     |

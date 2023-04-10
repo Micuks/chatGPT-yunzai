@@ -1,7 +1,7 @@
 # 使用 openAI API 的 Yunzai-Bot(v3)的 chatGPT 插件
 
-> 带有官方 OpenAI API 或带有反向代理的非官方 OpenAI API 的 Yunzai-Bot 的 ChatGPT 插件。
-> 使用 openAI 官方 API 或反向代理非官方 API 的[Yunzai-Bot](https://gitee.com/yoimiya-kokomi/Yunzai-Bot)(v3)的 chatGPT 插件。
+> 使用 openAI 官方 API 或反向代理非官方 API 的
+> [Yunzai-Bot](https://gitee.com/yoimiya-kokomi/Yunzai-Bot)(v3)的 chatGPT 插件. 也可以与[GoogleBard](bard.google.com)交谈.
 
 - [使用 openAI API 的 Yunzai-Bot(v3)的 chatGPT 插件](#使用-openai-api-的-yunzai-botv3的-chatgpt-插件)
   - [更新](#更新)
@@ -173,7 +173,8 @@ cp config.default.js config.js
 ```json
 {
 
-   ...
+   // ...
+
    // Google Bard 设置
    const USE_BARD = true; // Google Bard 的总开关
    const BARD_COOKIE =
@@ -181,7 +182,7 @@ cp config.default.js config.js
    // 你的 bard cookie。记得 **不要删除** `__Secure-1PSID=` 前缀,
    // 且**不要在等号附近添加空格**.
 
-   ...
+   // ...
 }
 ```
 
