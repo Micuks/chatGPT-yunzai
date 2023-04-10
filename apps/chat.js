@@ -133,12 +133,9 @@ export class chatgpt extends plugin {
 
   async chat(e) {
     const question = new Question(e.msg, e.sender);
-    question.prevChat = e.msg[0] == "?"
-      ? await question.createNewPrevChat()
-      : await question.getOrCreatePrevChat();
     switch (e.msg[0]) {
       case "?":
-        question.prevChat = await question.createNewPrevChat();
+        question.prevChat = question.createNewPrevChat();
         break;
       case "!":
         question.prevChat = await question.getOrCreatePrevChat();
@@ -160,7 +157,7 @@ export class chatgpt extends plugin {
           );
           return;
         } else {
-          question.prevChat = await question.getOrCreatePrevChat();
+          question.prevChat = await question.getOrCreatePrevChat("Bard");
         }
         break;
 
@@ -185,8 +182,6 @@ export class chatgpt extends plugin {
       `Waiting jobs: ${waitingCount}, Active jobs: ${activeCount}`,
     );
 
-    // await this.questionQueue.controller();
-
     await job.finished().then(async (response) => {
       await this.callback(e, response);
     });
@@ -198,7 +193,7 @@ export class chatgpt extends plugin {
     await this.updateChat(e, response);
   }
 
-  async updateChat(e, res) {
+  async gptUpdateChat(e, res) {
     let prevChat = await redis.get(`CHATGPT:CHATS:${e.sender.user_id}`);
     prevChat = await JSON.parse(prevChat);
     const chat = res.error
@@ -219,9 +214,46 @@ export class chatgpt extends plugin {
     };
 
     await redis.set(
-      `CHATGPT:CHATS:${prevChat.sender.user_id}`,
+      `CHATGPT:CHATS:${e.sender.user_id}`,
       JSON.stringify(prevChat),
     );
+  }
+
+  async bardUpdateChat(e, res) {
+    let prevChat = await redis.get(`CHATGPT:BARD_CHATS:${e.sender.user_id}`);
+    prevChat = await JSON.parse(prevChat);
+    const chat = res.error
+      ? {
+        conversationId: e.sender.user_id,
+        parentMessageId: undefined,
+      }
+      : {
+        conversationId: res?.conversationId,
+        parentMessageId: res?.id,
+      };
+    prevChat = {
+      sender: e.sender,
+      chat: chat,
+      utime: new Date(),
+      ctime: prevChat?.ctime ? prevChat.ctime : new Date(),
+      count: prevChat?.count + 1,
+    };
+
+    await redis.set(
+      `CHATGPT:BARD_CHATS:${e.sender.user_id}`,
+      JSON.stringify(prevChat),
+    );
+  }
+
+  async updateChat(e, res) {
+    switch (e.msg[0]) {
+      case "B":
+        await this.bardUpdateChat(e, res);
+        break;
+      default:
+        await this.gptUpdateChat(e, res);
+        break;
+    }
   }
 
   async cleanQueue(e) {

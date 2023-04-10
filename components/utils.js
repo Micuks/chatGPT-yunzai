@@ -62,7 +62,7 @@ export const initBard = () => {
     if (Config.proxy) {
       logger.info(`Use proxy ${Config.proxy} for bard`);
       const proxySlice = Config.proxy.split(":");
-      logger.info(proxySlice);
+      // logger.debug(proxySlice);
       if (proxySlice.length === 3) {
         return {
           host: proxySlice[1].slice(2, proxySlice[1].length),
@@ -82,7 +82,6 @@ export const initBard = () => {
 
   const proxyParams = setProxy();
   const params = { proxy: proxyParams };
-  logger.info(params);
   return new Bard(Config.bardCookie, params);
 };
 

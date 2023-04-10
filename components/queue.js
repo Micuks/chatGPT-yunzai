@@ -41,10 +41,12 @@ export default class QuestionQueue {
 
   askAndReply = async (job) => {
     const question = job.data.question;
-    if (question[0] == "B") {
-      return await this.bardAskAndReply(job);
-    } else {
-      return await this.gptAskAndReply(job);
+    switch (question[0]) {
+      case "B":
+        return await this.bardAskAndReply(job);
+
+      default:
+        return await this.gptAskAndReply(job);
     }
   };
 
@@ -75,7 +77,7 @@ export default class QuestionQueue {
     question = question.slice(1, question.len);
     const chat = this.getChat(job);
     try {
-      logger.info(`Current question: ${question}`);
+      logger.info(`Current chatGPT question: ${question}`);
       const res = await this.chatGPTAPI.sendMessage(question, chat);
       logger.info(`Get response text: ${res.text}`);
 
@@ -94,15 +96,12 @@ export default class QuestionQueue {
     let question = job.data.question;
     question = await question.slice(1, question.len);
     const chat = this.getChat(job);
-    const conversationId = chat.conversationId
-      ? chat.conversationId
-      : job.data.sender.user_id;
+    const conversationId = chat.conversationId;
     try {
       logger.info(
         `Current Bard question: ${question}, Bard conversationId: ${conversationId}`,
       );
-      // const text = await this.bardAPI.ask(question, conversationId);
-      const text = await this.bardAPI.ask(question);
+      const text = await this.bardAPI.ask(question, conversationId);
       logger.info(`Get response text: ${text}`);
       const res = {
         text: text,
@@ -117,15 +116,21 @@ export default class QuestionQueue {
   };
 
   setModel = (question) => {
-    let model = "";
-    if (question[0] == "4" && Config.useGpt4) {
-      model = "gpt-4";
-    } else if (Config.modelPaid) {
-      model = "text-davinci-002-render-paid";
-    } else {
-      model = "text-davinci-002-render-sha";
+    const gpt4 = "gpt-4";
+    const sha = "text-davinci-002-render-sha";
+    const paid = "text-davinci-002-render-paid";
+    const bard = "Bard";
+    switch (question[0]) {
+      case "4":
+        return (Config.modelPaid) ? gpt4 : sha;
+      case "?":
+      case "!":
+        return (Config.modelPaid) ? paid : sha;
+      case "B":
+        return bard;
+      default:
+        return sha;
     }
-    return model;
   };
 
   getUserSetting = async () => {
