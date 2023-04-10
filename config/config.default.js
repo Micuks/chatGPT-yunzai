@@ -16,8 +16,8 @@ const USE_GPT4 = false; // true if you subscribed and want to use GPT-4
 // Google Bard settings
 const USE_BARD = false; // The master switch for Google Bard
 const BARD_COOKIE =
-  "__Secure-1PSIDCC=<**Fill in your __Secure-1PSIDCC cookie section**>";
-// Your bard cookie
+  "__Secure-1PSID=<**Fill in your __Secure-1PSID cookie section**>";
+// Your bard cookie. **Remember not to delete the __Secure-1PSID= prefix**
 
 // You need not to modify the settings below
 export const Config = {

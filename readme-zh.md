@@ -10,6 +10,11 @@
 - [帮助](#帮助)
 
 ## 更新
+
+### Updated at 10/4/2023: 添加了谷歌的Google Bard
+
+现在你可以在QQ中借助Yunzai-Bot框架和本插件自由的和Google Bard进行交谈了!
+
 更新于 2023 年 3 月 15 日：GPT-4 模型
 
 OpenAI 刚刚发布的 GPT-4 模型现已在此插件的Unofficial版本下得到支持。

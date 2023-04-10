@@ -12,6 +12,10 @@
 
 ## Update
 
+### Updated at 10/4/2023: Google Bard
+
+Now you can chat with **Google Bard** in QQ via Yunzai-Bot freely!
+
 ### Updated at 3/15/2023: GPT-4 model
 
 The GPT-4 model just released by OpenAI is now supported **UNDER UNOFFICIAL VERSION**. 
