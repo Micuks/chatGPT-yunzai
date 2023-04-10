@@ -170,19 +170,17 @@ cp config.default.js config.js
 4. 在 [Google Bard](bard.google.com) 获取 `__Secure-1PSID` cookie，并填写在
    `config.json` 中。
 
+
+这里是`config.json`中与Bard相关部分的设置.
+
 ```json
 {
-
-   // ...
-
    // Google Bard 设置
    const USE_BARD = true; // Google Bard 的总开关
    const BARD_COOKIE =
      "__Secure-1PSID=<**填写你的 __Secure-1PSID cookie 部分**>";
    // 你的 bard cookie。记得 **不要删除** `__Secure-1PSID=` 前缀,
    // 且**不要在等号附近添加空格**.
-
-   // ...
 }
 ```
 

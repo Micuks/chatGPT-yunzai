@@ -189,18 +189,15 @@ cp config.default.js config.js
 4. Get `__Secure-1PSID` cookie at [Google Bard](bard.google.com), and fill it in
    `config.json`.
 
+Here's the related config for GoogleBard in `config.json`.
+
 ```json
 {
-
-   // ...
-
    // Google Bard settings
    const USE_BARD = true; // The master switch for Google Bard
    const BARD_COOKIE =
      "__Secure-1PSID=<**Fill in your __Secure-1PSID cookie section**>";
    // Your bard cookie. Remember **not to delete** the `__Secure-1PSID=` prefix
-
-   // ...
 }
 ```
 
