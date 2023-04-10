@@ -5,7 +5,7 @@ export default class Question {
     this.prevChat = undefined;
   }
 
-  async getOrCreatePrevChat() {
+  async getOrCreatePrevChat(model) {
     let prevChat = await redis.get(`CHATGPT:CHATS:${this.sender.user_id}`);
     if (!prevChat) {
       logger.info(
@@ -26,6 +26,10 @@ export default class Question {
     if (timeElapsed > timeOut) {
       logger.info(`Chat timeout: ${timeElapsed} seconds passed.`);
       prevChat = await this.createNewPrevChat();
+    }
+
+    if (model == "Bard") {
+      prevChat.conversationId = this.sender.user_id;
     }
 
     await redis.set(

@@ -60,7 +60,7 @@ export class chatgpt extends plugin {
           if (chat) {
             chat = JSON.parse(chat);
             response +=
-              `${chat.sender.nickname}:\n\tCall counts: ${chat.count}\n\tStart time: ${chat.ctime}\n\tLast active time: ${chat.utime}\n`;
+              `${chat.sender.nickname}:\n\tRequest count: ${chat.count}\n\tStart time: ${chat.ctime}\n\tLast active time: ${chat.utime}\n`;
           }
         }),
       );
