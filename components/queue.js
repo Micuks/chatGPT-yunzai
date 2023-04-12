@@ -14,7 +14,7 @@ export default class QuestionQueue {
 
   enQueue = (question) => {
     return this.queue.add(question, {
-      timeout: (Config.useGpt4) ? 180000 : 90000,
+      timeout: (Config.useGpt4) ? 180000 : 120000,
     });
   };
 
