@@ -50,7 +50,7 @@ export default class QuestionQueue {
     }
   };
 
-  parseResponseError = (err) => {
+  parseResponseError = (err, chat) => {
     if (err.message.includes("conversationId")) {
       return {
         text: `Your chat is expired. I've removed your chat for you.`,
@@ -90,7 +90,7 @@ export default class QuestionQueue {
       return res;
     } catch (err) {
       logger.error(err);
-      return this.parseResponseError(err);
+      return this.parseResponseError(err, chat);
     }
   };
 
@@ -113,7 +113,7 @@ export default class QuestionQueue {
       return res;
     } catch (err) {
       logger.error(err);
-      return this.parseResponseError(err);
+      return this.parseResponseError(err, chat);
     }
   };
 
