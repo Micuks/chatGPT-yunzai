@@ -124,14 +124,7 @@ cd config
 cp config.default.js config.js
 ```
 
-4.运行
-以下命令获取访问令牌(access token)。或者从[这里](https://chat.openai.com/api/auth/session)直接获取.
-
-```config
-python3 get_access_token.py
-# 填写你的OpenAI邮箱和密码，然后复制你之前的access token
-给出。
-```
+4.从[这里](https://chat.openai.com/api/auth/session)的JSON对象中直接获取access_token.
 
 然后将访问令牌粘贴到 config.js 中的 API_ACCESS_TOKEN 部分。
 

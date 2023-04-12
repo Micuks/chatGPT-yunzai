@@ -126,15 +126,11 @@ git clone https://github.com/Micuks/chatGPT-yunzai.git
 ```
 
 2. Different from official ChatGPT, this version requires an OpenAI access token
-   instead of an OpenAI API Key. To get this, I provide you a python script
-   `get_access_token.py`. Make sure you have **python3** installed. Then install
-   the requrements for getting access token.
+   instead of an OpenAI API Key. To get this, simply access 
+   "https://chat.openai.com/api/auth/session" and get your access_token from
+   the JSON object.
 
-```bash
-pip install -r requirements.txt
-pnpm update
-pnpm install chatgpt bull
-```
+   Then paste the access_token to `API_ACCESS_TOKEN` section in `config.js`.
 
 3. Copy `config.default.js` and rename it as `config.js` in config folder.
 
