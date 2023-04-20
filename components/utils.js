@@ -1,8 +1,9 @@
 import { Bard } from "googlebard";
 import { Config } from "../config/config.js";
-import proxy from "https-proxy-agent";
+import proxy from "keepalive-proxy-agent";
 import nodeFetch from "node-fetch";
 import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
+import https from "https";
 
 const CHAT_EXPIRATION = 3 * 24 * 60 * 60;
 const blockWords = ["Block1", "Block2", "Block3"];
@@ -52,33 +53,33 @@ export function initAPI() {
   return chatGPTAPI;
 }
 
+const setProxy = () => {
+  if (Config.proxy) {
+    logger.info(`Use proxy ${Config.proxy} for bard`);
+    const proxySlice = Config.proxy.split(":");
+    // logger.debug(proxySlice);
+    if (proxySlice.length === 3) {
+      return {
+        host: proxySlice[1].slice(2, proxySlice[1].length),
+        port: proxySlice[2],
+        protocol: "http",
+      };
+    } else if (proxySlice.length === 2) {
+      return {
+        host: proxySlice[0],
+        port: proxySlice[1],
+        protocol: "http",
+      };
+    }
+  }
+  return undefined;
+};
+
 export const initBard = () => {
   if (!Config.useBard) {
     logger.info(`Bard is not enabled`);
     return;
   }
-
-  const setProxy = () => {
-    if (Config.proxy) {
-      logger.info(`Use proxy ${Config.proxy} for bard`);
-      const proxySlice = Config.proxy.split(":");
-      // logger.debug(proxySlice);
-      if (proxySlice.length === 3) {
-        return {
-          host: proxySlice[1].slice(2, proxySlice[1].length),
-          port: proxySlice[2],
-          protocol: "http",
-        };
-      } else if (proxySlice.length === 2) {
-        return {
-          host: proxySlice[0],
-          port: proxySlice[1],
-          protocol: "http",
-        };
-      }
-    }
-    return undefined;
-  };
 
   const proxyParams = setProxy();
   const params = { proxy: proxyParams };
@@ -98,7 +99,7 @@ export const isBlocked = (message) => {
 };
 
 const fetchWithProxyForChatGPTAPI = async (url, options = {}) => {
-  const proxyServer = Config.proxy;
+  const proxyServer = { proxy: setProxy() };
   const defaultOptions = {
     agent: new proxy(proxyServer),
   };
