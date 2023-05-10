@@ -1,6 +1,6 @@
 import { Bard } from "googlebard";
 import { Config } from "../config/config.js";
-import proxy from "keepalive-proxy-agent";
+import { HttpsProxyAgent as proxy } from "https-proxy-agent";
 import nodeFetch from "node-fetch";
 import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
 import https from "https";
@@ -99,7 +99,7 @@ export const isBlocked = (message) => {
 };
 
 const fetchWithProxyForChatGPTAPI = async (url, options = {}) => {
-  const proxyServer = { proxy: setProxy() };
+  const proxyServer = Config.proxy;
   const defaultOptions = {
     agent: new proxy(proxyServer),
   };
