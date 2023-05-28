@@ -4,11 +4,14 @@ const PROXY = ""; // Your proxy url if you use a proxy
 const MODEL_NAME = "gpt-3.5-turbo-0301"; // Fill in the model you want to use
 const API_KEY = ""; // Fill in if you use **OFFICIAL OPENAI DAVINCI MODEL**
 
-const API_REVERSE_PROXY_URL = "https://bypass.duti.tech/api/conversation"; // (Optional)
+const API_REVERSE_PROXY_URL =
+  "https://api.pawan.krd/backend-api/conversation	"; // (Optional)
 // Fill in if you use unofficial reverse proxy solution.
 // By default this is enough
 
 const API_ACCESS_TOKEN = ""; // Fill in if you use unofficial reverse proxy solution
+// You can get it from "https://chat.openai.com/api/auth/session"
+// The value of 'accessToken'
 const MODEL_PAID = false; // true if you subscribed ChatGPT plus and
 const USE_GPT4 = false; // true if you subscribed and want to use GPT-4
 // use unofficial reverse proxy solution
