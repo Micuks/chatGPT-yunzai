@@ -6,9 +6,9 @@
 	"author": "Louis Wu",
 	"license": "MIT",
 	"dependencies": {
-		"bull": "^4.10.4",
-		"chatgpt": "^5.2.4",
-		"googlebard": "^1.0.4",
-		"https-proxy-agent": "^6.0.0"
+		"bull": "^4.11.3",
+		"chatgpt": "^5.2.5",
+		"googlebard": "^1.0.7",
+		"https-proxy-agent": "^6.2.1"
 	}
 }
