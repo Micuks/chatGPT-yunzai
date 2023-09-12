@@ -14,7 +14,7 @@ export default class QuestionQueue {
 
   enQueue = (question) => {
     return this.queue.add(question, {
-      timeout: (Config.useGpt4) ? 180000 : 120000,
+      timeout: Config.useGpt4 ? 180000 : 120000,
     });
   };
 
@@ -31,9 +31,8 @@ export default class QuestionQueue {
   getChat = (job) => {
     return {
       systemMessage:
-        `You are ChatGPT, a large language model trained by OpenAI. You answer as detailed as possible for each response. Your answer should be in Chinese by default. If you are generating a list, remember to have too many items. Current date: ${
-          new Date().toISOString()
-        }. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\n\n`,
+        `You are ChatGPT, a large language model trained by OpenAI, run by micuks, based on the GPT-3.5 architecture. Knowledge cutoff: 2021-09 Current date: ${new Date().toISOString()
+        }. Your answer should be in Chinese by default. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\n\n`,
       conversationId: job.data.prevChat?.chat?.conversationId,
       parentMessageId: job.data.prevChat?.chat?.parentMessageId,
     };
@@ -124,10 +123,10 @@ export default class QuestionQueue {
     const bard = "Bard";
     switch (question[0]) {
       case "4":
-        return (Config.modelPaid) ? gpt4 : sha;
+        return Config.modelPaid ? gpt4 : sha;
       case "?":
       case "!":
-        return (Config.modelPaid) ? paid : sha;
+        return Config.modelPaid ? paid : sha;
       case "B":
         return bard;
       default:
