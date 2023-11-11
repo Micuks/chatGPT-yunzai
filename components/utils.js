@@ -8,6 +8,10 @@ import https from "https";
 const CHAT_EXPIRATION = 3 * 24 * 60 * 60;
 const blockWords = ["Block1", "Block2", "Block3"];
 
+// Constants for Retry Mechanism
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
 export function initAPI() {
   let settings = {
     debug: false, // true for debug
@@ -107,5 +111,19 @@ const fetchWithProxyForChatGPTAPI = async (url, options = {}) => {
     ...defaultOptions,
     ...options,
   };
-  return await nodeFetch(url, mergedOptions);
+  return await fetchWithRetry(url, mergedOptions);
+};
+
+// Enhanced Fetch Function with Retry
+const fetchWithRetry = async (url, options = {}, retries = MAX_RETRIES) => {
+  try {
+    return await nodeFetch(url, options);
+  } catch (err) {
+    if (retries > 0 && err.type === "request-timeout") {
+      logger.warn("Timeout occurred, retrying... (${retries} retries left)");
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      return fetchWithRetry(url, options, retries - 1);
+    }
+    throw err;
+  }
 };
