@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { Bard } from "googlebard";
 import { Config } from "../config/config.js";
 import { HttpsProxyAgent as proxy } from "https-proxy-agent";
@@ -11,6 +12,7 @@ const blockWords = ["Block1", "Block2", "Block3"];
 // Constants for Retry Mechanism
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
+const TIMEOUT_MS = 60 * 1000;
 
 export function initAPI() {
   let settings = {
@@ -105,7 +107,7 @@ export const isBlocked = (message) => {
 const fetchWithProxyForChatGPTAPI = async (url, options = {}) => {
   const proxyServer = Config.proxy;
   const defaultOptions = {
-    agent: new proxy(proxyServer),
+    agent: new proxy(proxyServer, { keepAlive: true, timeout: TIMEOUT_MS }),
   };
   const mergedOptions = {
     ...defaultOptions,
