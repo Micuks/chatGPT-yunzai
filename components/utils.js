@@ -108,6 +108,7 @@ const fetchWithProxyForChatGPTAPI = async (url, options = {}) => {
   const proxyServer = Config.proxy;
   const defaultOptions = {
     agent: new proxy(proxyServer, { keepAlive: true, timeout: TIMEOUT_MS }),
+    timeout: TIMEOUT_MS,
   };
   const mergedOptions = {
     ...defaultOptions,
@@ -121,8 +122,9 @@ const fetchWithRetry = async (url, options = {}, retries = MAX_RETRIES) => {
   try {
     return await nodeFetch(url, options);
   } catch (err) {
-    if (retries > 0 && err.type === "request-timeout") {
-      logger.warn("Timeout occurred, retrying... (${retries} retries left)");
+    if (retries > 0) {
+      // err.type === "request-timeout"
+      logger.info(`Timeout occurred, retrying... (${retries} retries left)`);
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
       return fetchWithRetry(url, options, retries - 1);
     }
