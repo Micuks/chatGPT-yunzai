@@ -4,7 +4,6 @@ import { Config } from "../config/config.js";
 import { HttpsProxyAgent as proxy } from "https-proxy-agent";
 import nodeFetch from "node-fetch";
 import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
-import https from "https";
 import { error } from "console";
 
 const CHAT_EXPIRATION = 3 * 24 * 60 * 60;
@@ -83,38 +82,49 @@ const setProxy = () => {
 };
 
 class wrappedBard {
-  constructor(bardInstance) {
-    if (
-      bardInstance !== undefined &&
-      bardInstance !== null &&
-      bardInstance !== ""
-    ) {
-      this.Bard = bardInstance;
-    } else this.Bard = new Bard(Config.bardCookie, parms);
+  constructor() {
+    if (!Config.useBard) {
+      console.log(`Bard is not enabled`);
+      this.Bard = undefined;
+    }
+
+    const proxyParams = setProxy();
+    const params = { proxy: proxyParams };
+
+    this.Bard = new Bard(Config.bardCookie, params);
   }
 
   async ask(question, conversationId) {
     try {
       let res = await this.Bard.ask(question, conversationId);
       if (this.failedBardResponse(res)) {
-        res = await this.bardRetry(question, conversationId, MAX_RETRIES);
+        console.log(
+          `Error ${res} occurred, retrying... (${MAX_RETRIES} retries left)`
+        );
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+        return this.bardRetry(question, conversationId, MAX_RETRIES);
       }
+
       return res;
     } catch (err) {
       console.log(
-        `Error ${err} occurred, retrying... (${retries} retries left)`
+        `Error ${err} occurred, retrying... (${MAX_RETRIES} retries left)`
       );
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
       return this.bardRetry(question, conversationId, MAX_RETRIES);
     }
   }
 
-  failedBardResponse(res = "") {
+  failedBardResponse(res) {
     switch (res) {
       case "zh":
       case "en":
       case "fr":
       case "de":
+      case "SWML_DESCRIPTION_FROM_YOUR_INTERNET_ADDRESS":
+      case "":
+      case undefined:
+      case null:
         return true;
         break;
 
@@ -146,7 +156,7 @@ class wrappedBard {
             `Error ${res} occurred, retrying... (${retries} retries left)`
           );
           await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-          return bardRetry(question, conversationId, retries - 1);
+          return this.bardRetry(question, conversationId, retries - 1);
         }
 
         return res;
@@ -163,25 +173,20 @@ class wrappedBard {
           `Error ${err} occurred, retrying... (${retries} retries left)`
         );
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
-        return bardRetry(question, conversationId, retries - 1);
+        return this.bardRetry(question, conversationId, retries - 1);
       } else if (retries > 0) {
         return finalRetry(question, conversationId);
+      } else {
+        throw error(
+          `Max retries exceeded for Bard conversation[${conversationId}]. ${err}`
+        );
       }
-
-      throw err;
     }
   }
 }
 
 export const initBard = () => {
-  if (!Config.useBard) {
-    console.log(`Bard is not enabled`);
-    return;
-  }
-
-  const proxyParams = setProxy();
-  const params = { proxy: proxyParams };
-  return new wrappedBard(new Bard(Config.bardCookie, params));
+  return new wrappedBard();
 };
 
 export const isChatExpired = (date) => {
@@ -237,7 +242,7 @@ const fetchWithRetry = async (url, options = {}, retries = MAX_RETRIES) => {
       return fetchWithRetry(url, options, retries - 1);
     }
 
-    throw err;
+    throw error(`Max retries exceeded for ChatGPT conversation. ${err}`);
   }
 };
 

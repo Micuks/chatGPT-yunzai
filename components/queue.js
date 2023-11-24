@@ -97,6 +97,30 @@ export default class QuestionQueue {
     }
   };
 
+  bardRetry = async (question, conversationId) => {
+    try {
+      this.bardRetry(question, conversationId);
+      // The Fucking Error issued by Bard
+      const text = await this.bardAPI.bardRetry(question, conversationId);
+      logger.info(`Get response text: ${text}`);
+      const res = {
+        text: text,
+        conversationId: conversationId,
+        id: job.data?.parentMessageId,
+      };
+      return res;
+    } catch (err) {
+      if (err.message.includes("Error: Cannot read properties of undefined")) {
+        // Bard cookie expired.
+        return {
+          text: 'make sure you are using the correct cookie, copy the value of "__Secure-1PSID" cookie and set it like this:\n BARD_COOKIE = "__Secure-1PSID=<COOKIE_VALUE>")\n Also using a US proxy is recommended.\n请确保你使用了正确的Bard Cookie.',
+          conversationId: conversationId,
+          id: job.data?.parentMessageId,
+        };
+      }
+    }
+  };
+
   bardAskAndReply = async (job) => {
     let question = job.data.question;
     question = await question.slice(1, question.len);
@@ -107,7 +131,7 @@ export default class QuestionQueue {
         `Current Bard question: ${question}, Bard conversationId: ${conversationId}`
       );
       const text = await this.bardAPI.ask(question, conversationId);
-      logger.debug(`Get response text: ${text}`);
+      logger.info(`Get response text: ${text}`);
       const res = {
         text: text,
         conversationId: conversationId,
@@ -115,6 +139,10 @@ export default class QuestionQueue {
       };
       return res;
     } catch (err) {
+      if (err.message.includes("Error: Cannot read properties of undefined")) {
+        return await this.bardRetry(question, conversationId);
+      }
+
       logger.error(err);
       return this.parseResponseError(err, chat);
     }
