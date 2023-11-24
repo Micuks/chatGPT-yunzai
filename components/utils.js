@@ -91,10 +91,18 @@ class wrappedBard {
     const proxyParams = setProxy();
     const params = { proxy: proxyParams };
 
-    this.Bard = new Bard(Config.bardCookie, params);
+    this._bardCookie = Config.bardCookie;
+    this._params = params;
+    console.log(Config.bardCookie);
+    console.log(params);
+    this.Bard = new Bard(this._bardCookie, this._params);
   }
 
   async ask(question, conversationId) {
+    if (this.Bard === undefined || this.Bard === null) {
+      console.log(`Bard Instance not found. Creating new instance...`);
+      this.Bard = new Bard(this._bardCookie, this._params);
+    }
     try {
       let res = await this.Bard.ask(question, conversationId);
       if (this.failedBardResponse(res)) {
