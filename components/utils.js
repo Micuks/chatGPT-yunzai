@@ -128,7 +128,7 @@ const fetchWithRetry = async (url, options = {}, retries = MAX_RETRIES) => {
       );
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
       return fetchWithRetry(url, options, retries - 1);
-    }
+    } else return response;
   } catch (err) {
     if (retries > 0) {
       // err.type === "request-timeout"
@@ -140,4 +140,5 @@ const fetchWithRetry = async (url, options = {}, retries = MAX_RETRIES) => {
     }
     throw err;
   }
+  return undefined;
 };
