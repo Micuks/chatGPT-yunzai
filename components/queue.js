@@ -1,9 +1,6 @@
 import Bull from "bull";
-import { initAPI, initBard, isBlocked } from "./utils.js";
+import { isBlocked, bardRetry, chatGPTAPI, bardAPI } from "./utils.js";
 import { Config } from "../config/config.js";
-
-const chatGPTAPI = initAPI();
-const bardAPI = initBard();
 
 export default class QuestionQueue {
   constructor() {
@@ -86,7 +83,7 @@ export default class QuestionQueue {
         `Current chatGPT question: ${question}, current parentMessageId: ${chat.parentMessageId}`
       );
       const res = await this.chatGPTAPI.sendMessage(question, chat);
-      logger.info(`Get response text: ${res.text}`);
+      logger.debug(`Get response text: ${res.text}`);
 
       if (isBlocked(res.text)) {
         return "Sensitive word in response.";
@@ -109,7 +106,7 @@ export default class QuestionQueue {
         `Current Bard question: ${question}, Bard conversationId: ${conversationId}`
       );
       const text = await this.bardAPI.ask(question, conversationId);
-      logger.info(`Get response text: ${text}`);
+      logger.debug(`Get response text: ${text}`);
       const res = {
         text: text,
         conversationId: conversationId,
