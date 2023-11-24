@@ -124,7 +124,7 @@ cd config
 cp config.default.js config.js
 ```
 
-4.从[这里](https://chat.openai.com/api/auth/session)的JSON对象中直接获取access_token.
+4.从[这里](https://chat.openai.com/api/auth/session)的 JSON 对象中直接获取 access_token.
 
 然后将访问令牌粘贴到 config.js 中的 API_ACCESS_TOKEN 部分。
 
@@ -137,7 +137,7 @@ npm run start
 
 ### 用法 - 谷歌 Google Bard
 
-基本步骤与 ChatGPT 的前面步骤相同。
+基本步骤与 ChatGPT 的前面步骤相同。但是 Google Bard 对 Cookie 的检测比较严格, 使用体验可能不佳.
 
 1. 将该存储库克隆到 Yunzai-Bot 文件夹中的`plugins/`文件夹中。
 
@@ -163,17 +163,16 @@ cp config.default.js config.js
 4. 在 [Google Bard](bard.google.com) 获取 `__Secure-1PSID` cookie，并填写在
    `config.json` 中。
 
-
-这里是`config.json`中与Bard相关部分的设置.
+这里是`config.json`中与 Bard 相关部分的设置.
 
 ```javascript
 {
-   // Google Bard 设置
-   const USE_BARD = true; // Google Bard 的总开关
-   const BARD_COOKIE =
-     "__Secure-1PSID=<**填写你的 __Secure-1PSID cookie 部分**>";
-   // 你的 bard cookie。记得 **不要删除** `__Secure-1PSID=` 前缀,
-   // 且**不要在等号附近添加空格**.
+  // Google Bard 设置
+  const USE_BARD = true; // Google Bard 的总开关
+  const BARD_COOKIE =
+    "__Secure-1PSID=<**填写你的 __Secure-1PSID cookie 部分**>";
+  // 你的 bard cookie。记得 **不要删除** 形如`__Secure-1PSID=` 的前缀,
+  // 且**不要在等号附近添加空格**. 如果__Sqcure-1PSID不成功, 可以尝试其他的格式类似的Cookie.
 }
 ```
 
