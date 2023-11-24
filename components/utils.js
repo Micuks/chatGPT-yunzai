@@ -120,11 +120,21 @@ const fetchWithProxyForChatGPTAPI = async (url, options = {}) => {
 // Enhanced Fetch Function with Retry
 const fetchWithRetry = async (url, options = {}, retries = MAX_RETRIES) => {
   try {
-    return await nodeFetch(url, options);
+    let response = await nodeFetch(url, options);
+    let status_code = response.status;
+    if (status_code !== 200) {
+      logger.info(
+        `Error ${status_code} occurred, retrying... (${retries} retries left)`
+      );
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      return fetchWithRetry(url, options, retries - 1);
+    }
   } catch (err) {
     if (retries > 0) {
       // err.type === "request-timeout"
-      logger.info(`Timeout occurred, retrying... (${retries} retries left)`);
+      logger.info(
+        `Error ${err} occurred, retrying... (${retries} retries left)`
+      );
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
       return fetchWithRetry(url, options, retries - 1);
     }

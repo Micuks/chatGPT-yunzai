@@ -19,7 +19,15 @@ export default class QuestionQueue {
   };
 
   controller() {
-    this.queue.process(1, async (job) => {
+    let concurrencyJobs = Config?.concurrencyJobs;
+    if (
+      concurrencyJobs === undefined ||
+      concurrencyJobs === null ||
+      concurrencyJobs === ""
+    ) {
+      concurrencyJobs = 1;
+    }
+    this.queue.process(Config.concurrencyJobs, async (job) => {
       return await this.askAndReply(job);
     });
   }
