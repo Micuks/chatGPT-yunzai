@@ -82,7 +82,7 @@ const setProxy = () => {
   return undefined;
 };
 
-const wrappedBard = {
+class wrappedBard {
   constructor(bardInstance) {
     if (
       bardInstance !== undefined &&
@@ -91,9 +91,9 @@ const wrappedBard = {
     ) {
       this.Bard = bardInstance;
     } else this.Bard = new Bard(Config.bardCookie, parms);
-  },
+  }
 
-  ask: async (question, conversationId) => {
+  async ask(question, conversationId) {
     try {
       let res = await this.Bard.ask(question, conversationId);
       if (this.failedBardResponse(res)) {
@@ -107,7 +107,7 @@ const wrappedBard = {
       await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
       return this.bardRetry(question, conversationId, MAX_RETRIES);
     }
-  },
+  }
 
   failedBardResponse(res = "") {
     switch (res) {
@@ -122,10 +122,11 @@ const wrappedBard = {
         return false;
         break;
     }
-  },
+  }
 
-  async bardRetry(question, conversationId, retries) {
-    let lastRetry = async (question, conversationId) => {
+  async bardRetry(question, conversationId, retries = MAX_RETRIES) {
+    // The last time of retry: reset the conversation
+    const finalRetry = async (question, conversationId) => {
       console.log(`Bard conversation[${conversationId}] expired. Resetting...`);
       await this.Bard.resetConversation(conversationId);
 
@@ -150,9 +151,11 @@ const wrappedBard = {
 
         return res;
       } else if (retries > 0) {
-        return lastRetry(question, conversationId);
+        return finalRetry(question, conversationId);
       } else {
-        throw error("Max retries exceeded.");
+        throw error(
+          `Max retries exceeded for Bard conversation[${conversationId}].`
+        );
       }
     } catch (err) {
       if (retries > 1) {
@@ -162,13 +165,13 @@ const wrappedBard = {
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
         return bardRetry(question, conversationId, retries - 1);
       } else if (retries > 0) {
-        return lastRetry(question, conversationId);
+        return finalRetry(question, conversationId);
       }
 
       throw err;
     }
-  },
-};
+  }
+}
 
 export const initBard = () => {
   if (!Config.useBard) {
@@ -178,7 +181,7 @@ export const initBard = () => {
 
   const proxyParams = setProxy();
   const params = { proxy: proxyParams };
-  return wrappedBard(new Bard(Config.bardCookie, params));
+  return new wrappedBard(new Bard(Config.bardCookie, params));
 };
 
 export const isChatExpired = (date) => {
@@ -222,7 +225,7 @@ const fetchWithRetry = async (url, options = {}, retries = MAX_RETRIES) => {
 
       return response;
     } else {
-      throw error("Max retries exceeded.");
+      throw error(`Max retries exceeded for ChatGPT conversation.`);
     }
   } catch (err) {
     if (retries > 0) {

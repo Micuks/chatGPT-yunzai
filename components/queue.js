@@ -1,5 +1,5 @@
 import Bull from "bull";
-import { isBlocked, bardRetry, chatGPTAPI, bardAPI } from "./utils.js";
+import { isBlocked, chatGPTAPI, bardAPI } from "./utils.js";
 import { Config } from "../config/config.js";
 
 export default class QuestionQueue {
@@ -11,7 +11,8 @@ export default class QuestionQueue {
 
   enQueue = (question) => {
     return this.queue.add(question, {
-      timeout: Config.useGpt4 ? 180000 : 120000,
+      timeout:
+        Config?.concurrencyJobs > 3 ? Config.concurrencyJobs * 240000 : 240000,
     });
   };
 
