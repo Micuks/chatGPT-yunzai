@@ -30,9 +30,7 @@ export default class QuestionQueue {
 
   getChat = (job) => {
     return {
-      systemMessage:
-        `You are ChatGPT, a large language model trained by OpenAI, run by micuks, based on the GPT-3.5 architecture. Knowledge cutoff: 2021-09 Current date: ${new Date().toISOString()
-        }. Your answer should be in Chinese by default. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\n\n`,
+      systemMessage: `You are ChatGPT, a large language model trained by OpenAI, run by micuks, based on the GPT-3.5 architecture. Knowledge cutoff: 2021-09 Current date: ${new Date().toISOString()}. Your answer should be in Chinese by default. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\n\n`,
       conversationId: job.data.prevChat?.chat?.conversationId,
       parentMessageId: job.data.prevChat?.chat?.parentMessageId,
     };
@@ -77,7 +75,7 @@ export default class QuestionQueue {
     const chat = this.getChat(job);
     try {
       logger.info(
-        `Current chatGPT question: ${question}, current parentMessageId: ${chat.parentMessageId}`,
+        `Current chatGPT question: ${question}, current parentMessageId: ${chat.parentMessageId}`
       );
       const res = await this.chatGPTAPI.sendMessage(question, chat);
       logger.info(`Get response text: ${res.text}`);
@@ -100,7 +98,7 @@ export default class QuestionQueue {
     const conversationId = chat.conversationId;
     try {
       logger.info(
-        `Current Bard question: ${question}, Bard conversationId: ${conversationId}`,
+        `Current Bard question: ${question}, Bard conversationId: ${conversationId}`
       );
       const text = await this.bardAPI.ask(question, conversationId);
       logger.info(`Get response text: ${text}`);
@@ -143,11 +141,7 @@ export default class QuestionQueue {
         usePicture: false,
       };
     }
-    if (userSetting.usePicture) {
-      // TODO
-    } else {
-      await this.reply(`${res.text}`, e.isGroup);
-    }
+    await this.reply(`${res.text}`, e.isGroup);
   };
 
   async removeExpiredChat(expiredChat) {
