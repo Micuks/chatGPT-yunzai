@@ -10,7 +10,7 @@ const CHAT_EXPIRATION = 3 * 24 * 60 * 60;
 const blockWords = ["Block1", "Block2", "Block3"];
 
 // Constants for Retry Mechanism
-const MAX_RETRIES = 3;
+export const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1000;
 const TIMEOUT_MS =
   240 * 1000 * (Config.concurrencyJobs ? Config.concurrencyJobs : 1);
