@@ -1,39 +1,51 @@
 import { deprecate } from "util";
 import russianJoke from "./russianJoke";
+import { Config } from "../config/config";
+import QuestionType from "./question/QuestionType";
+import Data from "./data";
 
 export default class Question {
-  constructor(msg, questionType = undefined, e) {
+  constructor(questionData, cfg) {
+    const { e } = cfg;
     this.e = e;
-    this.sender = e.sender;
+    const { sender, msg, params } = questionData;
+    this.sender = sender;
     this.msg = msg;
+    this.params = params;
+
     // Get questionBody and questionType{ChatGPT, Bard}
     this.parserQuestion();
     this.metaInfo = this.getMetaInfo();
-
-    // Deprecated
-    this.prevChat = undefined;
   }
 
-  questionType = {
-    ChatGPT: "ChatGPT",
-    Bard: "Bard",
-  };
-
   parseQuestion = () => {
-    let gptReg = /^(\?|!|4|\/gpt4|gpt4|gpt|\/gpt)(.*)$/;
+    let gptReg = /^(\?|!|gpt|\/gpt)(.*)$/;
+    let gpt4Reg = /^(4|\/gpt4|gpt4)(.*)$/;
     let bardReg = /^(B|bard|\/bard)(.*)$/;
 
     let msg = this.e.msg;
 
     let questionBody = "";
-    let questionType = this.questionType.ChatGPT;
+    let questionType = QuestionType.ChatGPT;
 
     if (gptReg.test(msg)) {
       questionBody = gptReg.exec(msg)[2];
-      questionType = this.questionType.ChatGPT;
+      questionType = QuestionType.ChatGPT;
+    } else if (gpt4Reg.test(msg)) {
+      questionType = QuestionType.Gpt4;
+      if (Config.useGpt4) {
+        questionBody = gpt4Reg.exec(msg)[2];
+      } else {
+        questionBody = `My GPT-4 model is not enabled. Please contact my master if you have any question.`;
+      }
     } else if (bardReg.test(msg)) {
-      questionBody = bardReg.exec(msg)[2];
-      questionType = this.questionType.Bard;
+      questionType = QuestionType.Bard;
+      if (Config.useBard) {
+        questionBody = bardReg.exec(msg)[2];
+      } else {
+        questionBody =
+          "Bard is disabled. If you have any question, contact my master.";
+      }
     } else {
       questionBody = russianJoke.russianJokePrompt;
     }
@@ -42,8 +54,8 @@ export default class Question {
     this.questionType = questionType;
   };
 
-  getMetaInfo = () => {
-    let metaInfo = redis.get(`CHATGPT:${this.sender.user_id}`);
+  getMetaInfo = async () => {
+    let metaInfo = await Data.getChat(this.sender.user_id);
     if (!metaInfo) {
       metaInfo = this.newMetaInfo();
     }
@@ -53,12 +65,17 @@ export default class Question {
       metaInfo = this.newMetaInfo();
     }
 
+    metaInfo = JSON.stringify(metaInfo);
     return metaInfo;
   };
 
-  setMetaInfo = (metaInfo) => {
+  setMetaInfo = async (metaInfo, questionType = QuestionType.ChatGPT) => {
+    // TODO: Update MetaInfo corresponding to questionType
     try {
-      redis.set(`CHATGPT:${this.sender.user_id}`, JSON.stringify(metaInfo));
+      await redis.set(
+        `CHATGPT:META:${this.sender.user_id}`,
+        JSON.stringify(metaInfo)
+      );
     } catch (err) {
       console.error(
         `Failed to set Meta Info for user ${this.sender.user_id}: ${err}`
@@ -70,21 +87,23 @@ export default class Question {
   };
 
   newMetaInfo = () => {
-    let ctime = new Date();
+    let ctime = new Date().toLocaleString();
+    let conversationId = this.sender.user_id;
     return {
+      ctime: ctime,
+      utime: ctime,
+      sender: this.sender,
       bardInfo: {
-        ctime: ctime,
-        utime: ctime,
-        sender: this.sender,
         parentMessageId: undefined,
-        conversationId: this.sender.user_id,
+        conversationId: conversationId,
       },
       chatGptInfo: {
-        ctime: ctime,
-        utime: ctime,
-        sender: this.sender,
         parentMessageId: undefined,
-        conversationId: this.sender.user_id,
+        conversationId: conversationId,
+      },
+      gpt4Info: {
+        parentMessageId: undefined,
+        conversationId: conversationId,
       },
     };
   };
