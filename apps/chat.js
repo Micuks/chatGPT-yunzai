@@ -3,6 +3,7 @@ import plugin from "../../../lib/plugins/plugin.js";
 import QuestionQueue from "../components/queue.js";
 import Question from "../components/question.js";
 import { Config } from "../config/config.js";
+import QuestionData from "../components/question/QuestionData.js";
 
 const questionQueue = new QuestionQueue();
 questionQueue.controller();
@@ -41,7 +42,6 @@ export class chatgpt extends plugin {
     });
 
     this.questionQueue = questionQueue;
-    // this.questionQueue.controller();
   }
 
   async getChats(e) {
@@ -89,56 +89,16 @@ export class chatgpt extends plugin {
   }
 
   async chat(e) {
-    const question = new Question(e.msg, e.sender);
-    switch (e.msg[0]) {
-      case "?":
-        question.prevChat = question.createNewPrevChat();
-        break;
-      case "!":
-        question.prevChat = await question.getOrCreatePrevChat();
-        break;
-      case "4":
-        if (!Config.useGpt4) {
-          logger.info(
-            `My GPT-4 model is not enabled. Please contact my master for assistance.`
-          );
-          return;
-        } else {
-          question.prevChat = await question.getOrCreatePrevChat();
-        }
-        break;
-      case "B":
-        if (!Config.useBard) {
-          logger.info(
-            "My Bard is not enables. Please contact my master for assistance."
-          );
-          return;
-        } else {
-          question.prevChat = await question.getOrCreatePrevChat("Bard");
-        }
-        break;
+    const msg = e.msg;
+    const question = new QuestionData(msg, e);
 
-      default:
-        break;
-    }
-
-    const job = await this.questionQueue.enQueue(question);
-
-    const waitingCount = await this.questionQueue.queue.getWaitingCount();
-
-    const activeCount = await this.questionQueue.queue.getActiveCount();
-
-    this.reply(
-      `Thinking..., ${e.sender.nickname}.\n` +
-        `Waiting jobs: ${waitingCount}\n` +
-        `Active jobs: ${activeCount}`,
-      true,
-      { recallMsg: 10 }
-    );
+    const job = await this.questionQueue.enQueue(e, question);
 
     await job.finished().then(async (response) => {
       await this.callback(e, response);
     });
+
+    await job.retry(3, 1000);
   }
 
   async callback(e, response) {
