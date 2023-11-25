@@ -1,22 +1,53 @@
 import Bull from "bull";
-import { isBlocked, chatGPTAPI, bardAPI } from "./utils.js";
+import { isBlocked, chatGPTAPI, bardAPI, MAX_RETRIES } from "./utils.js";
 import { Config } from "../config/config.js";
+import { askAndReply } from "./ask.js";
+import Question from "./question.js";
+import { deprecate } from "util";
 
 export default class QuestionQueue {
   constructor() {
     this.queue = new Bull("questionQueue");
     this.chatGPTAPI = chatGPTAPI;
     this.bardAPI = bardAPI;
+
+    this.messageEvents = new Map();
+    this.ttl = MAX_RETRIES;
   }
 
-  enQueue = (question) => {
-    return this.queue.add(question, {
+  _enQueue = async (e, question) => {
+    const job = await this.queue.add(question, {
       timeout:
         Config?.concurrencyJobs > 3 ? Config.concurrencyJobs * 240000 : 240000,
     });
+    let cfg = { e: e };
+
+    this.messageEvents.set(job.id, cfg);
   };
 
-  controller() {
+  enQueue = async (e, question) => {
+    await this._enQueue(e, question);
+
+    let wJobs = this.getWaitingJobs() || 0;
+    let aJobs = this.getActiveJobs() || 0;
+
+    e.reply(
+      `Thinking..., ${e.sender.nickname}.\n` +
+        `Waiting jobs: ${wJobs}\n` +
+        `Active jobs: ${aJobs}`,
+      true,
+      { recallMsg: 10 }
+    );
+  };
+
+  getWaitingJobs = () => {
+    return this.queue.getWaitingCount();
+  };
+  getActiveJobs = () => {
+    return this.queue.getWaitingCount();
+  };
+
+  getConcurrentJobs = async () => {
     let concurrencyJobs = Config?.concurrencyJobs * 1;
     if (
       concurrencyJobs === undefined ||
@@ -25,8 +56,40 @@ export default class QuestionQueue {
     ) {
       concurrencyJobs = 1;
     }
+  };
+
+  async controller() {
+    const concurrencyJobs = await this.getConcurrentJobs();
+
     this.queue.process(concurrencyJobs, async (job) => {
-      return await this.askAndReply(job);
+      let questionData = job.data;
+      let cfg = this.messageEvents[job.id];
+      let questionInstance = new Question(questionData, cfg);
+      return await askAndReply(questionInstance);
+    });
+
+    this.queue.on("completed", async (job, result) => {
+      // TODO
+    });
+    this.queue.on("error", async (job, result) => {
+      console.log(
+        `Moving failed question job issued by ${job.e.user_id} to failed queue...`
+      );
+      let newJob = await job.moveToFailed({ result });
+
+      // FIXME: The following maybe useless code
+      this.messageEvents.set(newJob.id, this.messageEvents.get(job.id));
+      this.messageEvents.delete(job.id);
+    });
+    this.queue.on("failed", async (job, result) => {
+      // TODO: Not finished: redo the job if ttl > 0
+      let jobE = this.messageEvents[job.data.jobIdx] || undefined;
+      let question = job.data.question;
+      let ttl = question.ttl;
+      if (ttl > 0) {
+        question.ttl -= 1;
+        this.queue.add(question);
+      }
     });
   }
 
@@ -42,6 +105,7 @@ export default class QuestionQueue {
     };
   };
 
+  @deprecate
   askAndReply = async (job) => {
     const question = job.data.question;
     switch (question[0]) {
