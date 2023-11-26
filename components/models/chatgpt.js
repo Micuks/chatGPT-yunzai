@@ -2,6 +2,7 @@ import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
 import { error } from "console";
 import fetch from "node-fetch";
 import { Config } from "../../config/config.js";
+import Response from "../question/Response.js";
 
 const MAX_RETRIES = 5;
 const TIMEOUT_MS = 240 * Config.concurrencyJobs * 1000;
@@ -23,6 +24,27 @@ class ChatGPTAPI {
       this.mode = "official";
       this.api = new ChatGPTAPI(params);
     }
+  }
+
+  async ask(questionBody, params) {
+    let { systemMessage, conversationId, parentMessageId, model } = params;
+    this.api._model = model || this.api._model;
+    let response = undefined;
+
+    try {
+      const res = await this.api.sendMessage(questionBody, params);
+      response = new Response(
+        res.text,
+        res.parentMessageId,
+        res.conversationId
+      );
+    } catch (err) {
+      // I don't want to handle err here
+      console.log(`Error asking ChatGPT: ${err}`);
+      throw err;
+    }
+
+    return response;
   }
 
   /**

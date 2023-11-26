@@ -53,7 +53,7 @@ class BardAPI {
       console.log(`Bard is not enabled, don't force me to do this...`);
     }
     try {
-      let res = await this.Bard.ask(questionBody, conversationId);
+      res = await this.Bard.ask(questionBody, conversationId);
       response = new Response(res, conversationId, conversationId, params);
     } catch (err) {
       // I don't want to handle err here
