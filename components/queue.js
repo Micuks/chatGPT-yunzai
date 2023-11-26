@@ -4,6 +4,7 @@ import { askAndReply } from "./ask.js";
 import Question from "./question.js";
 import QuestionData from "./question/QuestionData.js";
 import QuestionType from "./question/QuestionType.js";
+import { error } from "console";
 
 const MAX_RETRIES = 5;
 
@@ -24,6 +25,7 @@ export default class QuestionQueue {
    * @param {number} retries
    */
   _enQueue = async (e, question, retries = MAX_RETRIES) => {
+    question.ttl = retries;
     const job = await this.queue.add(question, {
       timeout:
         Config?.concurrencyJobs > 3 ? Config.concurrencyJobs * 240000 : 240000,
@@ -91,6 +93,7 @@ export default class QuestionQueue {
         response.startsWith("TypeError: Cannot read properties of undefined") ||
         response === "SWML_DESCRIPTION_FROM_YOUR_INTERNET_ADDRESS" ||
         response === "zh" ||
+        response === "zh-Hant" ||
         response === "en"
       ) {
         return true;
@@ -104,15 +107,20 @@ export default class QuestionQueue {
     const concurrencyJobs = await this.getConcurrentJobs();
 
     this.queue.process(concurrencyJobs, async (job) => {
-      console.log(`New job[${job.id}]: ${job.data}`);
+      console.log(
+        `New job[${job.id}] issued by ${job.data.sender.nickname}[${job.data.sender.user_id}]`
+      );
       let questionData = job.data;
       let cfg = await this.messageEvents.get(job.id);
+      let { e, retries } = cfg;
       let questionInstance = new Question(questionData, cfg);
       await questionInstance.init();
-      let response = await askAndReply(questionInstance);
 
-      if (this.jobFailed(response, questionInstance)) {
-        job.moveToFailed({ result: response });
+      let response = await askAndReply(questionInstance);
+      let text = response.text;
+
+      if (this.jobFailed(text, questionInstance)) {
+        throw error("Error: Response nonsense");
       }
 
       // Update meta info
@@ -133,34 +141,39 @@ export default class QuestionQueue {
       const { e } = cfg;
       e.reply(`${result}`, true);
     });
-    // this.queue.on("error", async (job, err) => {
-    //   // TODO: Better use of result, maybe the error info
-    //   let e = await this.messageEvents.get(job.id);
-    //   console.log(
-    //     `Moving failed question job[${job.id}] issued by ${e.user_id} to failed queue...`
-    //   );
-    //   let newJob = await job.moveToFailed({ result: err });
 
-    //   // FIXME: The following maybe useless code
-    //   await this.messageEvents
-    //     .set(newJob.id, this.messageEvents.get(job.id))
-    //     .then(this.messageEvents.delete(job.id));
-    // });
-    // this.queue.on("failed", async (job, err) => {
-    //   // TODO: Not finished: redo the job if ttl > 0
-    //   let { e, retries } = await this.messageEvents.get(job.id);
-    //   let question = job.data;
+    this.queue.on("error", async (job = {}, err) => {
+      // TODO: Better use of result, maybe the error info
+      // let idReg = /^.*job.*(\d+).*$/;
+      // let id = idReg.exec(job)[1];
+      // let e = await this.messageEvents.get(id);
+      console.log(`Error: ${job}, ${err}`);
+      // console.log(
+      //   `Moving failed question job[${id}] issued by ${e.user_id} to failed queue...`
+      // );
+      // let newJob = await job.moveToFailed({ result: err });
 
-    //   // If retries > 0, redo the job by creating a new job
-    //   if (retries > 0) {
-    //     console.log(
-    //       `Job ${job.id} failed. Redoing this job with ${retries} retries left...`
-    //     );
-    //     this._enQueue(e, question, retries - 1).then(() => {
-    //       job.remove();
-    //     });
-    //   }
-    // });
+      // // FIXME: The following maybe useless code
+      // await this.messageEvents
+      //   .set(newJob.id, this.messageEvents.get(job.id))
+      //   .then(this.messageEvents.delete(job.id));
+    });
+    this.queue.on("failed", async (job, err) => {
+      // TODO: Not finished: redo the job if ttl > 0
+      console.log(`Error: ${job}, ${err}`);
+      // let { e, retries } = await this.messageEvents.get(job.id);
+      // let question = job.data;
+
+      // // If retries > 0, redo the job by creating a new job
+      // if (retries > 0) {
+      //   console.log(
+      //     `Job ${job.id} failed. Redoing this job with ${retries} retries left...`
+      //   );
+      //   this._enQueue(e, question, retries - 1).then(() => {
+      //     job.remove();
+      //   });
+      // }
+    });
   };
 
   async removeJob(job) {

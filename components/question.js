@@ -2,19 +2,27 @@ import RussianJoke from "./russianJoke.js";
 import { Config } from "../config/config.js";
 import QuestionType from "./question/QuestionType.js";
 import Data from "./data.js";
+import QuestionData from "./question/QuestionData.js";
 
 /**
  * Remember to init it after creating a new Question
  */
 export default class Question {
-  constructor(questionData, cfg) {
+  /**
+   *
+   * @param {QuestionData} questionData
+   * @param {object} cfg
+   */
+  constructor(questionData, cfg = {}) {
     const { e } = cfg;
     this.e = e;
     const { sender, msg, params } = questionData;
+    this.questionData = questionData;
     this.sender = sender;
     this.user_id = this.sender.user_id;
     this.msg = msg;
     this.params = params;
+    this.cfg = cfg;
   }
 
   init = async () => {

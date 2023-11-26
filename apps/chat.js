@@ -3,6 +3,8 @@ import Question from "../components/question.js";
 import QuestionData from "../components/question/QuestionData.js";
 import QuestionQueue from "../components/queue.js";
 
+const MAX_RETRIES = 5;
+
 const questionQueue = new QuestionQueue(
   `ChatGptQueue-${Math.round(new Date().getTime() / 1000)}`
 );
@@ -93,11 +95,36 @@ export class chatgpt extends plugin {
     const msg = e.msg;
     const question = new QuestionData(msg, e);
 
-    let job = await this.questionQueue.enQueue(e, question);
+    await this.doJob(e, question);
+  }
 
-    await job.finished().then(() => {
-      console.log(`Job ${job.id} finished.`);
-    });
+  async doJob(e, question, ttl = MAX_RETRIES) {
+    let job = await this.questionQueue.enQueue(e, question);
+    let retry = false;
+
+    await job
+      .finished()
+      .then((res) => {
+        console.log(
+          `Job ${job.id} issued by ${e.sender.nickname}[${e.sender.user_id}] finished.`
+        );
+      })
+      .catch((err) => {
+        if (ttl > 0) {
+          console.log(
+            `Error occurred in job ${job.id} issued by ${e.sender.nickname}[${e.sender.user_id}]. Retrying...(${question.ttl} times left)`
+          );
+          retry = true;
+        } else {
+          console.log(
+            `Error occurred in job ${job.id} issued by ${e.sender.nickname}[${e.sender.user_id}]. Max retries exceeded.`
+          );
+        }
+      });
+
+    if (retry) {
+      await this.doJob(e, question, ttl - 1);
+    }
   }
 
   async callback(e, response) {
