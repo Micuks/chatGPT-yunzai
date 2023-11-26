@@ -10,18 +10,28 @@ import Response from "./question/Response.js";
 const chatGpt = new ChatGPTAPI();
 const bard = new BardAPI();
 
-export const askAndReply = async (
-  questionInstance = new Question(),
-  cfg = {}
-) => {
+/**
+ *
+ * @param {Question} questionInstance
+ * @param {object} cfg
+ * @returns {Response}
+ */
+export const askAndReply = async (questionInstance, cfg = {}) => {
+  let toAsk = chatGptAskAndReply;
   switch (questionInstance.questionType) {
     case QuestionType.ChatGPT:
-      return chatGptAskAndReply(questionInstance, cfg);
+      toAsk = chatGptAskAndReply;
+      break;
     case QuestionType.Gpt4:
-      return gpt4AskAndReply(questionInstance, cfg);
+      toAsk = gpt4AskAndReply;
+      break;
     case QuestionType.Bard:
-      return bardAskAndReply(questionInstance, cfg);
+      toAsk = bardAskAndReply;
+      break;
+    default:
+      break;
   }
+  return toAsk(questionInstance, cfg);
 };
 
 /**
@@ -55,7 +65,7 @@ const chatGptAskAndReply = async (
     model: model,
   };
 
-  let res = await chatGpt.ask(questionBody, params);
+  let res = chatGpt.ask(questionBody, params);
   let text = res.text;
 
   if (isBlocked(text)) {

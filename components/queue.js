@@ -1,9 +1,12 @@
 import Bull from "bull";
-import { isBlocked, chatGPTAPI, bardAPI, MAX_RETRIES } from "./utils.js";
 import { Config } from "../config/config.js";
 import { askAndReply } from "./ask.js";
 import Question from "./question.js";
 import { deprecate } from "util";
+import QuestionData from "./question/QuestionData.js";
+import QuestionType from "./question/QuestionType.js";
+
+const MAX_RETRIES = 5;
 
 export default class QuestionQueue {
   constructor() {
@@ -12,19 +15,30 @@ export default class QuestionQueue {
     this.bardAPI = bardAPI;
 
     this.messageEvents = new Map();
-    this.ttl = MAX_RETRIES;
   }
 
-  _enQueue = async (e, question) => {
+  /**
+   *
+   * @param {object} e MessageEvent
+   * @param {QuestionData} question
+   * @param {number} retries
+   */
+  _enQueue = async (e, question, retries = MAX_RETRIES) => {
     const job = await this.queue.add(question, {
       timeout:
         Config?.concurrencyJobs > 3 ? Config.concurrencyJobs * 240000 : 240000,
     });
-    let cfg = { e: e };
+    let cfg = { e: e, retries: retries };
 
     this.messageEvents.set(job.id, cfg);
+    return true;
   };
 
+  /**
+   *
+   * @param {object} e MessageEvent
+   * @param {QuestionData} question
+   */
   enQueue = async (e, question) => {
     await this._enQueue(e, question);
 
@@ -58,6 +72,26 @@ export default class QuestionQueue {
     }
   };
 
+  /**
+   *
+   * @param {string} response
+   * @param {Question} questionInstance
+   */
+  jobFailed(response, questionInstance) {
+    if (questionInstance.questionType === QuestionType.Bard) {
+      if (
+        response.startsWith("TypeError: Cannot read properties of undefined") ||
+        response === "SWML_DESCRIPTION_FROM_YOUR_INTERNET_ADDRESS" ||
+        response === "zh" ||
+        response === "en"
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   async controller() {
     const concurrencyJobs = await this.getConcurrentJobs();
 
@@ -67,34 +101,52 @@ export default class QuestionQueue {
       let questionInstance = new Question(questionData, cfg);
       let response = await askAndReply(questionInstance);
 
+      if (this.jobFailed(response, questionInstance)) {
+        job.moveToFailed({ result: response });
+      }
+
       // Update meta info
       questionInstance.updateMetaInfo(
         response.parentMessageId,
         response.conversationId
       );
+
+      // Return text
+      return response.text;
     });
 
     this.queue.on("completed", async (job, result) => {
-      // TODO
+      let cfg = await this.messageEvents
+        .get(job.id)
+        .then(this.messageEvents.delete(job.id));
+      const { e } = cfg;
+      e.reply(`${result}`, true);
     });
     this.queue.on("error", async (job, result) => {
+      // TODO: Better use of result, maybe the error info
       console.log(
         `Moving failed question job issued by ${job.e.user_id} to failed queue...`
       );
       let newJob = await job.moveToFailed({ result });
 
       // FIXME: The following maybe useless code
-      this.messageEvents.set(newJob.id, this.messageEvents.get(job.id));
-      this.messageEvents.delete(job.id);
+      await this.messageEvents
+        .set(newJob.id, this.messageEvents.get(job.id))
+        .then(this.messageEvents.delete(job.id));
     });
     this.queue.on("failed", async (job, result) => {
       // TODO: Not finished: redo the job if ttl > 0
-      let jobE = this.messageEvents[job.data.jobIdx] || undefined;
-      let question = job.data.question;
-      let ttl = question.ttl;
-      if (ttl > 0) {
-        question.ttl -= 1;
-        this.queue.add(question);
+      let { e, retries } = await this.messageEvents.get(job.id);
+      let question = job.data;
+
+      // If retries > 0, redo the job by creating a new job
+      if (retries > 0) {
+        console.log(
+          `Job ${job.id} failed. Redoing this job with ${retries} retries left...`
+        );
+        this._enQueue(e, question, retries - 1).then(() => {
+          job.remove();
+        });
       }
     });
   }
@@ -248,6 +300,14 @@ export default class QuestionQueue {
     await this.reply(`${res.text}`, e.isGroup);
   };
 
+  /**
+   * Description placeholder
+   * @date 11/26/2023 - 12:58:20 PM
+   *
+   * @async
+   * @param {*} expiredChat
+   * @returns {*}
+   */
   async removeExpiredChat(expiredChat) {
     logger.info(`${expiredChat.data.prevChat.sender}'s chat expired.`);
     await expiredChat.remove();

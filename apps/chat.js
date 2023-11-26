@@ -93,12 +93,6 @@ export class chatgpt extends plugin {
     const question = new QuestionData(msg, e);
 
     const job = await this.questionQueue.enQueue(e, question);
-
-    await job.finished().then(async (response) => {
-      await this.callback(e, response);
-    });
-
-    await job.retry(3, 1000);
   }
 
   async callback(e, response) {
