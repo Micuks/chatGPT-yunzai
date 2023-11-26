@@ -1,20 +1,20 @@
 import Data from "./data.js";
-import Question from "./question";
-import QuestionType from "./question/QuestionType";
-import ChatGPTAPI from "./models/chatgpt.js";
+import Question from "./question.js";
+import QuestionType from "./question/QuestionType.js";
+import ChatGptApi from "./models/chatgpt.js";
 import BardAPI from "./models/bard.js";
 import { isBlocked } from "./utils.js";
-import { error } from "console";
 import Response from "./question/Response.js";
+import { Config } from "../config/config.js";
 
-const chatGpt = new ChatGPTAPI();
+const chatGpt = new ChatGptApi();
 const bard = new BardAPI();
 
 /**
  *
  * @param {Question} questionInstance
  * @param {object} cfg
- * @returns {Response}
+ * @returns {Promise<Response>}
  */
 export const askAndReply = async (questionInstance, cfg = {}) => {
   let toAsk = chatGptAskAndReply;
@@ -31,57 +31,60 @@ export const askAndReply = async (questionInstance, cfg = {}) => {
     default:
       break;
   }
-  return toAsk(questionInstance, cfg);
+  return await toAsk(questionInstance, cfg);
 };
 
 /**
  * ask chatgpt
  * @param {Question} questionInstance Question instance
  * @param {object} cfg
- * @returns {Response}
+ * @returns {Promise<Response>}
  */
-const chatGptAskAndReply = async (
-  questionInstance = new Question(),
-  cfg = {}
-) => {
-  let questionBody = questionInstance.questionBody;
-  let questionType = questionInstance.questionType;
-  let metaInfo = await questionInstance.metaInfo;
-  metaInfo = metaInfo.chatGptInfo;
-  let sender = questionInstance.sender;
-  let e = questionInstance.e;
-  let msg = questionInstance.msg;
-  let user_id = sender.user_id;
-  let conversationId = metaInfo.conversationId;
-  let parentMessageId = metaInfo.parentMessageId;
+const chatGptAskAndReply = async (questionInstance, cfg = {}) => {
+  try {
+    let questionBody = questionInstance.questionBody;
+    let questionType = questionInstance.questionType;
+    let metaInfo = questionInstance.metaInfo;
+    metaInfo = metaInfo.chatGptInfo;
+    console.log(metaInfo);
+    let sender = questionInstance.sender;
+    let e = questionInstance.e;
+    let msg = questionInstance.msg;
+    let user_id = sender.user_id;
+    let conversationId = metaInfo.conversationId;
+    let parentMessageId = metaInfo.parentMessageId;
 
-  let model = getModel(questionType);
-  chat.chatGptCount += 1;
+    let model = getModel(questionType);
 
-  let params = {
-    systemMessage: `You are ChatGPT, a large language model trained by OpenAI, ran and maintained by micuks, based on the GPT-3.5 architecture. Knowledge cutoff: 2021-09 Current date: ${new Date().toISOString()}. Your answer should be in Chinese by default. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\nIf the question is empty, tell a Russian-style joke in Chinese, and introduce yourself at the same time.\n`,
-    conversationId: conversationId,
-    parentMessageId: parentMessageId,
-    model: model,
-  };
+    let params = {
+      systemMessage: `You are ChatGPT, a large language model trained by OpenAI, ran and maintained by micuks, based on the GPT-3.5 architecture. Knowledge cutoff: 2021-09 Current date: ${new Date().toISOString()}. Your answer should be in Chinese by default. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\nIf the question is empty, tell a Russian-style joke in Chinese, and introduce yourself at the same time.\n`,
+      conversationId: conversationId,
+      parentMessageId: parentMessageId,
+      model: model,
+    };
 
-  let res = chatGpt.ask(questionBody, params);
-  let text = res.text;
+    let res = await chatGpt.ask(questionBody, params);
+    let text = res.text;
+    console.log(`Response text: ${text}`);
 
-  if (isBlocked(text)) {
-    return "检测到敏感词, 我不告诉你这个问题的答案. Sensitive word detected. This response is rejected.";
+    if (isBlocked(text)) {
+      return "检测到敏感词, 我不告诉你这个问题的答案. Sensitive word detected. This response is rejected.";
+    }
+
+    return res;
+  } catch (err) {
+    console.log(err);
+    throw err;
   }
-
-  return res;
 };
 
 /**
  * ask gpt4
  * @param {Question} questionInstance
  * @param {object} cfg
- * @returns {Response}
+ * @returns {Promise<Response>}
  */
-const gpt4AskAndReply = async (questionInstance = new Question(), cfg = {}) => {
+const gpt4AskAndReply = async (questionInstance, cfg = {}) => {
   let questionBody = questionInstance.questionBody;
   let questionType = questionInstance.questionType;
   let metaInfo = await questionInstance.metaInfo;
@@ -94,7 +97,6 @@ const gpt4AskAndReply = async (questionInstance = new Question(), cfg = {}) => {
   let user_id = sender.user_id;
 
   let model = getModel(questionType);
-  chat.chatGptCount += 1;
 
   let params = {
     systemMessage: `You are ChatGPT, a large language model trained by OpenAI, ran and maintained by micuks, based on the GPT-4 architecture. Knowledge cutoff: 2023-06 Current date: ${new Date().toISOString()}. Your answer should be in Chinese by default. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\nIf the question is empty, tell a Russian-style joke in Chinese, and introduce yourself at the same time.\n`,
@@ -117,9 +119,9 @@ const gpt4AskAndReply = async (questionInstance = new Question(), cfg = {}) => {
  *
  * @param {Question} questionInstance
  * @param {object} cfg
- * @returns {Response}
+ * @returns {Promise<Response>}
  */
-const bardAskAndReply = async (questionInstance = new Question(), cfg = {}) => {
+const bardAskAndReply = async (questionInstance, cfg = {}) => {
   let questionBody = questionInstance.questionBody;
   let questionType = questionInstance.questionType;
   let metaInfo = await questionInstance.metaInfo;
@@ -130,7 +132,6 @@ const bardAskAndReply = async (questionInstance = new Question(), cfg = {}) => {
   let conversationId = metaInfo;
 
   let model = getModel(questionType);
-  chat.chatGptCount += 1;
 
   let params = {
     systemMessage: `Current date: ${new Date().toISOString()}. Your answer should be in Chinese by default. And Your answer should be **in pure text**, no photos, no videos and no other media forms. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\nIf the question following this paragraph is empty, tell a Russian-style joke in Chinese, and introduce yourself at the same time.\n`,

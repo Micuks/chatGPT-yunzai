@@ -1,6 +1,6 @@
 import { Bard } from "googlebard";
-import { Config } from "../../config/config";
-import Response from "../question/Response";
+import { Config } from "../../config/config.js";
+import Response from "../question/Response.js";
 
 class BardAPI {
   constructor() {

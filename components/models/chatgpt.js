@@ -1,4 +1,5 @@
 import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from "chatgpt";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import { error } from "console";
 import fetch from "node-fetch";
 import { Config } from "../../config/config.js";
@@ -8,7 +9,7 @@ const MAX_RETRIES = 5;
 const TIMEOUT_MS = 240 * Config.concurrencyJobs * 1000;
 const RETRY_DELAY_MS = 1000;
 
-class ChatGPTAPI {
+class ChatGptApi {
   constructor() {
     let params = { fetch: this.fetch };
 
@@ -26,6 +27,12 @@ class ChatGPTAPI {
     }
   }
 
+  /**
+   *
+   * @param {string} questionBody
+   * @param {object} params
+   * @returns {Promise<Response>}
+   */
   async ask(questionBody, params) {
     let { systemMessage, conversationId, parentMessageId, model } = params;
     this.api._model = model || this.api._model;
@@ -33,6 +40,7 @@ class ChatGPTAPI {
 
     try {
       const res = await this.api.sendMessage(questionBody, params);
+      console.log(res);
       response = new Response(
         res.text,
         res.parentMessageId,
@@ -50,16 +58,19 @@ class ChatGPTAPI {
   /**
    * Fetch with proxy and retry
    * @param {string} url
-   * @param {object} options
+   * @param {object} params
    * @param {number} retries retries left
    * @returns response
    */
-  async fetch(url, options = {}, retries = MAX_RETRIES) {
+  async fetch(url, params = {}, retries = MAX_RETRIES) {
     const proxyServer = Config.proxy;
     let options = {
-      agent: new proxy(proxyServer, { keepAlive: true, timeout: TIMEOUT_MS }),
+      agent: new HttpsProxyAgent(proxyServer, {
+        keepAlive: true,
+        timeout: TIMEOUT_MS,
+      }),
       timeout: TIMEOUT_MS,
-      ...options,
+      ...params,
     };
 
     try {
@@ -86,13 +97,13 @@ class ChatGPTAPI {
         );
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
         return fetch(url, options, retries - 1);
+      } else {
+        throw error(`Max retries exceeded for ChatGPT conversation. ${err}`);
       }
-
-      throw error(`Max retries exceeded for ChatGPT conversation. ${err}`);
     }
 
-    return false;
+    return undefined;
   }
 }
 
-export default ChatGPTAPI;
+export default ChatGptApi;

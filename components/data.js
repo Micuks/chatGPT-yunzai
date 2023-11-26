@@ -1,7 +1,8 @@
 const Data = {
   getMetaInfo: async (user_id) => {
-    let chat = await redis.get(`CHATGPT:META:${user_id}`);
-    return chat;
+    let meta = await redis.get(`CHATGPT:META:${user_id}`);
+    meta = await JSON.parse(meta);
+    return meta;
   },
 
   setMetaInfo: async (user_id, chat) => {

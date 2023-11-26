@@ -1,8 +1,8 @@
 class Response {
   constructor(text, parentMessageId, conversationId, params = {}) {
-    this.text;
-    this.conversationId;
-    this.parentMessageId;
+    this.text = text;
+    this.conversationId = conversationId;
+    this.parentMessageId = parentMessageId;
     this.params = params;
   }
 }

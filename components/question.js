@@ -1,24 +1,30 @@
-import { deprecate } from "util";
-import russianJoke from "./russianJoke";
-import { Config } from "../config/config";
-import QuestionType from "./question/QuestionType";
-import Data from "./data";
+import RussianJoke from "./russianJoke.js";
+import { Config } from "../config/config.js";
+import QuestionType from "./question/QuestionType.js";
+import Data from "./data.js";
 
+/**
+ * Remember to init it after creating a new Question
+ */
 export default class Question {
   constructor(questionData, cfg) {
     const { e } = cfg;
     this.e = e;
     const { sender, msg, params } = questionData;
     this.sender = sender;
+    this.user_id = this.sender.user_id;
     this.msg = msg;
     this.params = params;
-
-    // Get questionBody and questionType{ChatGPT, Bard}
-    this.parserQuestion();
-    this.metaInfo = this.getMetaInfo(); // WARN: this is a Promise
   }
 
-  parseQuestion = () => {
+  init = async () => {
+    this.metaInfo = await this.getMetaInfo();
+
+    // Get questionBody and questionType{ChatGPT, Bard}
+    await this.parseQuestion();
+  };
+
+  parseQuestion = async () => {
     let gptReg = /^(\?|!|gpt|\/gpt)(.*)$/;
     let gpt4Reg = /^(4|\/gpt4|gpt4)(.*)$/;
     let bardReg = /^(B|bard|\/bard)(.*)$/;
@@ -47,7 +53,7 @@ export default class Question {
           "Bard is disabled. If you have any question, contact my master.";
       }
     } else {
-      questionBody = russianJoke.russianJokePrompt;
+      questionBody = RussianJoke.russianJokePrompt;
     }
 
     this.questionBody = questionBody;
@@ -59,19 +65,13 @@ export default class Question {
     if (!metaInfo) {
       metaInfo = this.newMetaInfo();
     }
-    try {
-      metaInfo = JSON.parse(metaInfo);
-    } catch (err) {
-      metaInfo = this.newMetaInfo();
-    }
 
-    metaInfo = JSON.stringify(metaInfo);
     return metaInfo;
   };
 
   setMetaInfo = async (metaInfo) => {
     try {
-      await Data.setMetaInfo(metaInfo);
+      await Data.setMetaInfo(this.user_id, metaInfo);
     } catch (err) {
       console.log(
         `Failed to set Meta Info for user ${this.sender.user_id}: ${err}`
@@ -83,7 +83,7 @@ export default class Question {
   };
 
   updateMetaInfo = async (parentMessageId, conversationId) => {
-    let metaInfo = await this.metaInfo;
+    let metaInfo = this.metaInfo;
     metaInfo.utime = new Date().toLocaleString();
     let thisInfo = undefined;
 
@@ -133,7 +133,10 @@ export default class Question {
     };
   };
 
-  @deprecate
+  /**
+   * @deprecated
+   * @returns
+   */
   bardGetOrCreatePrevChat = async () => {
     let prevChat = await redis.get(`CHATGPT:BARD_CHATS:${this.sender.user_id}`);
     if (!prevChat) {
@@ -166,7 +169,10 @@ export default class Question {
     return prevChat;
   };
 
-  @deprecate
+  /**
+   * @deprecated
+   * @returns
+   */
   gptGetOrCreatePrevChat = async () => {
     let prevChat = await redis.get(`CHATGPT:CHATS:${this.sender.user_id}`);
     if (!prevChat) {
@@ -198,6 +204,11 @@ export default class Question {
     return prevChat;
   };
 
+  /**
+   * @deprecated
+   * @param {*} model
+   * @returns
+   */
   async getOrCreatePrevChat(model = "ChatGPT") {
     if (model == "Bard") {
       const prevChat = await this.bardGetOrCreatePrevChat();
@@ -209,11 +220,10 @@ export default class Question {
   }
 
   /**
-   *
+   * @deprecated
    * @param {string} model model name, ChatGPT or Bard
    * @returns new PrevChat Object
    */
-  @deprecate
   createNewPrevChat = (model = "ChatGPT") => {
     const ctime = new Date();
     return {

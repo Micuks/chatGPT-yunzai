@@ -1,4 +1,4 @@
-import { Config } from "../../config/config";
+import { Config } from "../../config/config.js";
 
 export default class QuestionData {
   constructor(msg, e, params = {}) {
