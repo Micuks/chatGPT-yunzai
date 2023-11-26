@@ -1,5 +1,5 @@
 class Response {
-  constructor(test, parentMessageId, conversationId, params = {}) {
+  constructor(text, parentMessageId, conversationId, params = {}) {
     this.text;
     this.conversationId;
     this.parentMessageId;
