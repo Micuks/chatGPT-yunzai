@@ -1,11 +1,12 @@
-// import oraPromise from "ora";
 import plugin from "../../../lib/plugins/plugin.js";
-import QuestionQueue from "../components/queue.js";
 import Question from "../components/question.js";
-import { Config } from "../config/config.js";
 import QuestionData from "../components/question/QuestionData.js";
+import QuestionQueue from "../components/queue.js";
 
-const questionQueue = new QuestionQueue();
+const questionQueue = new QuestionQueue(
+  `ChatGptQueue-${Math.round(new Date().getTime() / 1000)}`
+);
+
 questionQueue.controller();
 
 export class chatgpt extends plugin {
@@ -17,7 +18,7 @@ export class chatgpt extends plugin {
       priority: 65536, // Larger number, lower priority
       rule: [
         {
-          reg: "^[\\s]*(\\?|!|4|B)[\\s\\S]*",
+          reg: "^[\\s]*(\\?|？|!|！|gpt|/gpt|4|/gpt4|gpt4|B|bard|/bard)[\\s\\S]*$",
           fnc: "chat",
         },
         {
@@ -34,9 +35,9 @@ export class chatgpt extends plugin {
           fnc: "cleanQueue",
         },
         {
-          reg: "[^#].+$",
+          reg: "^[^#]+.*$",
           fnc: "randomReply",
-          dsc: "概率随机回复幽默内容",
+          desc: "Reply a lucky user by random",
         },
       ],
     });
@@ -92,7 +93,11 @@ export class chatgpt extends plugin {
     const msg = e.msg;
     const question = new QuestionData(msg, e);
 
-    const job = await this.questionQueue.enQueue(e, question);
+    let job = await this.questionQueue.enQueue(e, question);
+
+    await job.finished().then(() => {
+      console.log(`Job ${job.id} finished.`);
+    });
   }
 
   async callback(e, response) {
@@ -159,6 +164,7 @@ export class chatgpt extends plugin {
 
   async updateChat(e, questionData) {
     let questionInstance = new Question(questionData);
+    await questionInstance.init();
     questionInstance.updateMetaInfo();
     switch (e.msg[0]) {
       case "B":
