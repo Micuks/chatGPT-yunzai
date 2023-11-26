@@ -15,7 +15,7 @@ export default class Question {
 
     // Get questionBody and questionType{ChatGPT, Bard}
     this.parserQuestion();
-    this.metaInfo = this.getMetaInfo();
+    this.metaInfo = this.getMetaInfo(); // WARN: this is a Promise
   }
 
   parseQuestion = () => {
@@ -55,7 +55,7 @@ export default class Question {
   };
 
   getMetaInfo = async () => {
-    let metaInfo = await Data.getChat(this.sender.user_id);
+    let metaInfo = await Data.getMetaInfo(this.sender.user_id);
     if (!metaInfo) {
       metaInfo = this.newMetaInfo();
     }
@@ -69,21 +69,43 @@ export default class Question {
     return metaInfo;
   };
 
-  setMetaInfo = async (metaInfo, questionType = QuestionType.ChatGPT) => {
-    // TODO: Update MetaInfo corresponding to questionType
+  setMetaInfo = async (metaInfo) => {
     try {
-      await redis.set(
-        `CHATGPT:META:${this.sender.user_id}`,
-        JSON.stringify(metaInfo)
-      );
+      await Data.setMetaInfo(metaInfo);
     } catch (err) {
-      console.error(
+      console.log(
         `Failed to set Meta Info for user ${this.sender.user_id}: ${err}`
       );
       return false;
     }
 
     return true;
+  };
+
+  updateMetaInfo = async (parentMessageId, conversationId) => {
+    let metaInfo = await this.metaInfo;
+    metaInfo.utime = new Date().toLocaleString();
+    let thisInfo = undefined;
+
+    switch (this.questionType) {
+      case QuestionType.ChatGPT:
+        thisInfo = metaInfo.chatGptInfo;
+        break;
+      case QuestionType.Gpt4:
+        thisInfo = metaInfo.gpt4Info;
+        break;
+      case QuestionType.Bard:
+        thisInfo = metaInfo.bardInfo;
+        break;
+      default:
+        console.log(`Unknown question type: ${this.questionType}`);
+        break;
+    }
+    thisInfo.count += 1;
+    thisInfo.parentMessageId = parentMessageId || thisInfo.parentMessageId;
+    thisInfo.conversationId = conversationId || this.conversationId;
+
+    await this.setMetaInfo(metaInfo);
   };
 
   newMetaInfo = () => {
@@ -94,14 +116,17 @@ export default class Question {
       utime: ctime,
       sender: this.sender,
       bardInfo: {
+        count: 0,
         parentMessageId: undefined,
         conversationId: conversationId,
       },
       chatGptInfo: {
+        count: 0,
         parentMessageId: undefined,
         conversationId: conversationId,
       },
       gpt4Info: {
+        count: 0,
         parentMessageId: undefined,
         conversationId: conversationId,
       },

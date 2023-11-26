@@ -65,7 +65,13 @@ export default class QuestionQueue {
       let questionData = job.data;
       let cfg = this.messageEvents[job.id];
       let questionInstance = new Question(questionData, cfg);
-      return await askAndReply(questionInstance);
+      let response = await askAndReply(questionInstance);
+
+      // Update meta info
+      questionInstance.updateMetaInfo(
+        response.parentMessageId,
+        response.conversationId
+      );
     });
 
     this.queue.on("completed", async (job, result) => {

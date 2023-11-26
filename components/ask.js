@@ -5,6 +5,7 @@ import ChatGPTAPI from "./models/chatgpt.js";
 import BardAPI from "./models/bard.js";
 import { isBlocked } from "./utils.js";
 import { error } from "console";
+import Response from "./question/Response.js";
 
 const chatGpt = new ChatGPTAPI();
 const bard = new BardAPI();
@@ -47,19 +48,17 @@ const chatGptAskAndReply = async (
     parentMessageId: parentMessageId,
   };
 
-  let response = await chatGpt.ask(questionBody, params);
-  parentMessageId = response.parentMessageId;
-  conversationId = response.conversationId;
-  let text = response.text;
-
-  // TODO: Update chat, and modify gpt4 and bard functions respectively.
-  updateChat();
+  let res = await chatGpt.ask(questionBody, params);
+  parentMessageId = res.parentMessageId;
+  conversationId = res.conversationId;
+  let text = res.text;
+  let response = new Response(text, parentMessageId, conversationId);
 
   if (isBlocked(text)) {
     return "检测到敏感词, 我不告诉你这个问题的答案. Sensitive word detected. This response is rejected.";
   }
 
-  return text;
+  return response;
 };
 
 const gpt4AskAndReply = async (questionInstance = new Question(), cfg = {}) => {
