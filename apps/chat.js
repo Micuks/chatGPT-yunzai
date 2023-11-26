@@ -163,7 +163,9 @@ export class chatgpt extends plugin {
     );
   }
 
-  async updateChat(e, res) {
+  async updateChat(e, questionData) {
+    let questionInstance = new Question(questionData);
+    questionInstance.updateMetaInfo();
     switch (e.msg[0]) {
       case "B":
         await this.bardUpdateChat(e, res);
