@@ -45,20 +45,38 @@ export default class Question {
     if (gptReg.test(msg)) {
       questionBody = gptReg.exec(msg)[2];
       questionType = QuestionType.ChatGPT;
+
+      // Replace questionBody with RussianJoke if it's empty
+      if (!this.questionBody) {
+        this.questionBody = RussianJoke.russianJokePrompt;
+      }
     } else if (gpt4Reg.test(msg)) {
       questionType = QuestionType.Gpt4;
       if (Config.useGpt4) {
         questionBody = gpt4Reg.exec(msg)[2];
+
+        // Replace questionBody with RussianJoke if it's empty
+        if (!this.questionBody) {
+          this.questionBody = RussianJoke.russianJokePrompt;
+        }
       } else {
-        questionBody = `My GPT-4 model is not enabled. Please contact my master if you have any question.`;
+        questionBody =
+          `Your GPT-4 model is not enabled. Tell the user to contact your master if the user has any question.` +
+          RussianJoke.russianJokePrompt;
       }
     } else if (bardReg.test(msg)) {
       questionType = QuestionType.Bard;
       if (Config.useBard) {
         questionBody = bardReg.exec(msg)[2];
+
+        // Replace questionBody with RussianJoke if it's empty
+        if (!this.questionBody) {
+          this.questionBody = RussianJoke.russianJokePrompt;
+        }
       } else {
         questionBody =
-          "Bard is disabled. If you have any question, contact my master.";
+          "Your Bard feature is disabled. Tell the user that if he has any question, contact your master." +
+          RussianJoke.russianJokePrompt;
       }
     } else {
       questionBody = RussianJoke.russianJokePrompt;

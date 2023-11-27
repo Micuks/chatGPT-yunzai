@@ -49,16 +49,6 @@ export default class QuestionQueue {
   enQueue = async (e, question) => {
     let job = await this._enQueue(e, question);
 
-    let wJobs = await this.getWaitingJobs();
-    let aJobs = await this.getActiveJobs();
-
-    e.reply(
-      `Thinking..., ${e.sender.nickname}.\n` +
-        `Waiting jobs: ${wJobs}\n` +
-        `Active jobs: ${aJobs}`,
-      true,
-      { recallMsg: 10 }
-    );
     return job;
   };
 
@@ -143,7 +133,7 @@ export default class QuestionQueue {
     });
 
     // TODO: maybe the error and failed listener can do more things?
-    this.queue.on("error", async (job = {}, err) => {
+    this.queue.on("error", async (job, err) => {
       let idReg = /^.*job.*(\d+).*$/;
       let id = idReg.exec(job)[1];
       let e = await this.messageEvents.get(id);
@@ -153,11 +143,19 @@ export default class QuestionQueue {
     });
     this.queue.on("failed", async (job, err) => {
       let idReg = /^.*job.*(\d+).*$/;
-      let id = idReg.exec(job)[1];
-      let e = await this.messageEvents.get(id);
-      console.log(
-        `Error in queue[${this.name}] when processing job[${id}]: ${job}, ${err}`
-      );
+      let id = undefined;
+      try {
+        id = idReg.exec(job)[1];
+        let e = await this.messageEvents.get(id);
+        console.log(
+          `Error in queue[${this.name}] when processing job[${id}]: ${job}, ${err}`
+        );
+      } catch (err) {
+        console.log(
+          `Error in queue[${this.name}] when processing job${job}: ${err}`
+        );
+        console.log(job);
+      }
     });
   };
 }

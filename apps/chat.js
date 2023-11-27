@@ -98,8 +98,21 @@ export class chatgpt extends plugin {
     await this.doJob(e, question);
   }
 
-  async doJob(e, question, ttl = MAX_RETRIES) {
+  async doJob(e, question, cfg = { first_time: true, ttl: MAX_RETRIES }) {
+    let { first_time, ttl } = cfg;
     let job = await this.questionQueue.enQueue(e, question);
+    if (first_time) {
+      let wJobs = await this.questionQueue.getWaitingJobs();
+      let aJobs = await this.questionQueue.getActiveJobs();
+
+      e.reply(
+        `Thinking..., ${e.sender.nickname}.\n` +
+          `Waiting jobs: ${wJobs}\n` +
+          `Active jobs: ${aJobs}`,
+        true,
+        { recallMsg: 10 }
+      );
+    }
     let retry = false;
 
     await job
@@ -123,7 +136,7 @@ export class chatgpt extends plugin {
       });
 
     if (retry) {
-      await this.doJob(e, question, ttl - 1);
+      await this.doJob(e, question, { first_time: false, ttl: ttl - 1 });
     }
   }
 
