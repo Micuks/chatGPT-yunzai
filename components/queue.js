@@ -5,6 +5,7 @@ import Question from "./question.js";
 import QuestionData from "./question/QuestionData.js";
 import QuestionType from "./question/QuestionType.js";
 import { error } from "console";
+import postProcess from "./reply.js";
 
 const MAX_RETRIES = 5;
 
@@ -33,11 +34,6 @@ export default class QuestionQueue {
     let cfg = { e: e, retries: retries };
 
     this.messageEvents.set(job.id, cfg);
-    console.log(
-      `_enQueue: job.id[${job.id}], e[${
-        this.messageEvents.get(job.id).e
-      }], retries[${this.messageEvents.get(job.id).retries}]`
-    );
     return job;
   };
 
@@ -77,7 +73,7 @@ export default class QuestionQueue {
    * @param {string} response
    * @param {Question} questionInstance
    */
-  jobFailed(response, questionInstance) {
+  responseNonsense(response, questionInstance) {
     if (questionInstance.questionType === QuestionType.Bard) {
       if (
         response.startsWith("TypeError: Cannot read properties of undefined") ||
@@ -103,7 +99,7 @@ export default class QuestionQueue {
     const concurrencyJobs = await this.getConcurrentJobs();
 
     this.queue.process(concurrencyJobs, async (job) => {
-      console.log(
+      console.debug(
         `New job[${job.id}] issued by ${job.data.sender.nickname}[${job.data.sender.user_id}]`
       );
       let questionData = job.data;
@@ -115,8 +111,8 @@ export default class QuestionQueue {
       let response = await askAndReply(questionInstance);
       let text = response.text;
 
-      if (this.jobFailed(text, questionInstance)) {
-        throw error("Error: Response nonsense");
+      if (this.responseNonsense(text, questionInstance)) {
+        throw error("nonsense Bard response");
       }
 
       // Update meta info
@@ -141,11 +137,14 @@ export default class QuestionQueue {
        * @param {*} result
        * @returns {*}
        */ async (job, result) => {
-        console.log(`Job[${job.id}] completed.`);
+        console.debug(`Job[${job.id}] completed.`);
         let cfg = await this.messageEvents.get(job.id);
         this.messageEvents.delete(job.id);
         const { e } = cfg;
-        e.reply(`${result}`, true);
+        let questionData = job.data;
+
+        // Postprocess: if result includes image url, render it.
+        await postProcess(questionData, result, cfg);
       }
     );
 

@@ -36,11 +36,11 @@ export class chatgpt extends plugin {
           reg: "#(清除队列|清空队列)",
           fnc: "cleanQueue",
         },
-        {
-          reg: "^[^#]+.*$",
-          fnc: "randomReply",
-          desc: "Reply a lucky user by random",
-        },
+        // {
+        //   reg: "^[^#]+.*$",
+        //   fnc: "randomReply",
+        //   desc: "Reply a lucky user by random",
+        // },
       ],
     });
 
@@ -106,7 +106,7 @@ export class chatgpt extends plugin {
       let aJobs = await this.questionQueue.getActiveJobs();
 
       e.reply(
-        `Thinking..., ${e.sender.nickname}.\n` +
+        `${e.sender.nickname}, Thinking...\n` +
           `Waiting jobs: ${wJobs}\n` +
           `Active jobs: ${aJobs}`,
         true,
