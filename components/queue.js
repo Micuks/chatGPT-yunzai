@@ -93,7 +93,13 @@ export default class QuestionQueue {
     return false;
   }
 
-  controller = async () => {
+  controller = /**
+   * Bull Queue controller
+   * @date 11/27/2023 - 10:41:33 AM
+   *
+   * @async
+   * @returns {*}
+   */ async () => {
     const concurrencyJobs = await this.getConcurrentJobs();
 
     this.queue.process(concurrencyJobs, async (job) => {
@@ -124,38 +130,68 @@ export default class QuestionQueue {
       return response.text;
     });
 
-    this.queue.on("completed", async (job, result) => {
-      console.log(`Job[${job.id}] completed.`);
-      let cfg = await this.messageEvents.get(job.id);
-      this.messageEvents.delete(job.id);
-      const { e } = cfg;
-      e.reply(`${result}`, true);
-    });
+    this.queue.on(
+      "completed",
+      /**
+       * Completed job listener
+       * @date 11/27/2023 - 10:42:32 AM
+       *
+       * @async
+       * @param {import("bull").Job} job
+       * @param {*} result
+       * @returns {*}
+       */ async (job, result) => {
+        console.log(`Job[${job.id}] completed.`);
+        let cfg = await this.messageEvents.get(job.id);
+        this.messageEvents.delete(job.id);
+        const { e } = cfg;
+        e.reply(`${result}`, true);
+      }
+    );
 
-    // TODO: maybe the error and failed listener can do more things?
-    this.queue.on("error", async (job, err) => {
-      let idReg = /^.*job.*(\d+).*$/;
-      let id = idReg.exec(job)[1];
-      let e = await this.messageEvents.get(id);
-      console.log(
-        `Error in queue[${this.name}] when processing job[${id}]: ${job}, ${err}`
-      );
-    });
-    this.queue.on("failed", async (job, err) => {
-      let idReg = /^.*job.*(\d+).*$/;
-      let id = undefined;
-      try {
-        id = idReg.exec(job)[1];
+    // HINT: error jobs are moved to failed jobs automatically
+    this.queue.on(
+      "error",
+      /**
+       * Error job listener
+       * @param {string} job
+       * @param {string} err
+       */
+      async (job, err) => {
+        let idReg = /^.*job.*(\d+).*$/;
+        let id = idReg.exec(job)[1];
         let e = await this.messageEvents.get(id);
         console.log(
           `Error in queue[${this.name}] when processing job[${id}]: ${job}, ${err}`
         );
-      } catch (err) {
-        console.log(
-          `Error in queue[${this.name}] when processing job${job}: ${err}`
-        );
-        console.log(job);
       }
-    });
+    );
+    this.queue.on(
+      "failed",
+      /**
+       * Failed job listener
+       * @date 11/27/2023 - 10:44:30 AM
+       *
+       * @async
+       * @param {Bull.job} job
+       * @param {error} err
+       * @returns {*}
+       */ async (job, err) => {
+        let idReg = /^.*job.*(\d+).*$/;
+        let id = undefined;
+        try {
+          id = idReg.exec(job)[1];
+          let e = await this.messageEvents.get(id);
+          console.log(
+            `Error in queue[${this.name}] when processing job[${id}]: ${job}, ${err}`
+          );
+        } catch (err) {
+          console.log(
+            `Error in queue[${this.name}] when processing job${job.id}: ${err}`
+          );
+          // console.log(job);
+        }
+      }
+    );
   };
 }
