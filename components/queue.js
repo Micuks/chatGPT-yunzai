@@ -108,7 +108,7 @@ export default class QuestionQueue {
       let questionInstance = new Question(questionData, cfg);
       await questionInstance.init();
 
-      let response = await askAndReply(questionInstance);
+      let response = await askAndReply(questionInstance, cfg);
       let text = response.text;
 
       if (this.responseNonsense(text, questionInstance)) {

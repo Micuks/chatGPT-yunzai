@@ -6,6 +6,7 @@ import BardAPI from "./models/bard.js";
 import Response from "./question/Response.js";
 import { Config } from "../config/config.js";
 import { isBlocked } from "./utils.js";
+import { error } from "node:console";
 
 const chatGpt = new ChatGptApi();
 const bard = new BardAPI();
@@ -44,6 +45,13 @@ export const askAndReply = async (questionInstance, cfg = {}) => {
       askAndReply(questionInstance, cfg);
     } else {
       console.log(`Error: ${err}, no more retries left.`);
+      let { e } = cfg;
+
+      response = new Response(
+        `${e.sender.nickname}, Failed to answer your question. Please retry later. ${e.sender.nickname}, 没能回答您的问题, 请重试.`,
+        questionInstance.metaInfo.parentMessageId || undefined,
+        questionInstance.metaInfo.conversationId || undefined
+      );
     }
   }
 

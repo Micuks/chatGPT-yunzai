@@ -132,6 +132,9 @@ export class chatgpt extends plugin {
           console.log(
             `Error occurred in job ${job.id} issued by ${e.sender.nickname}[${e.sender.user_id}]. Max retries exceeded.`
           );
+          e.reply(
+            `${e.sender.nickname}, Failed to answer your question. Please retry later. ${e.sender.nickname}, 没能回答您的问题, 请重试.`
+          );
         }
       });
 

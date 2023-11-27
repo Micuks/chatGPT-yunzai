@@ -1,5 +1,6 @@
 import Version from "./version.js";
 export default class Render {
+  // TODO: Render in markdown format, and render responses that have image urls
   constructor() {
     this.imgTemplatePath = "/common/image-template/html";
     this.version = Version.version;
