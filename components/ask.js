@@ -3,9 +3,9 @@ import Question from "./question.js";
 import QuestionType from "./question/QuestionType.js";
 import ChatGptApi from "./models/chatgpt.js";
 import BardAPI from "./models/bard.js";
-import { isBlocked } from "./utils.js";
 import Response from "./question/Response.js";
 import { Config } from "../config/config.js";
+import { isBlocked } from "./utils.js";
 
 const chatGpt = new ChatGptApi();
 const bard = new BardAPI();

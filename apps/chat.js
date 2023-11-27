@@ -112,7 +112,7 @@ export class chatgpt extends plugin {
       .catch((err) => {
         if (ttl > 0) {
           console.log(
-            `Error occurred in job ${job.id} issued by ${e.sender.nickname}[${e.sender.user_id}]. Retrying...(${question.ttl} times left)`
+            `Error occurred in job ${job.id} issued by ${e.sender.nickname}[${e.sender.user_id}]. Retrying...(${ttl} times left)`
           );
           retry = true;
         } else {
