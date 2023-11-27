@@ -163,6 +163,7 @@ export default class QuestionQueue {
         console.log(
           `Error in queue[${this.name}] when processing job[${id}]: ${job}, ${err}`
         );
+        console.debug(err);
       }
     );
     this.queue.on(

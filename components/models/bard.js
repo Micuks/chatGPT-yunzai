@@ -20,7 +20,7 @@ class BardAPI {
   setProxy() {
     let proxy = Config.proxy;
     if (proxy) {
-      console.log(`Use proxy ${proxy} for bard.`);
+      logger.info(`Use proxy ${proxy} for bard.`);
       let proxySlice = proxy.split(":");
       if (proxySlice.length === 3) {
         return {

@@ -6,7 +6,7 @@ let urlReg =
 
 let render = new Render();
 
-export default postProcess = async (questionData, response, cfg) => {
+const postProcess = async (questionData, response, cfg) => {
   let { e } = cfg;
   if (urlReg.test(response)) {
     // Render and reply
@@ -17,3 +17,5 @@ export default postProcess = async (questionData, response, cfg) => {
   }
   return true;
 };
+
+export default postProcess;
