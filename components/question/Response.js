@@ -6,12 +6,12 @@ class Response {
    * @param {string} conversationId
    * @param {object} params
    */
-  constructor(text, parentMessageId, conversationId, params = {}) {
-    this.text = text;
-    this.conversationId = conversationId;
-    this.parentMessageId = parentMessageId;
-    this.params = params;
+  constructor (text, parentMessageId, conversationId, params = {}) {
+    this.text = text
+    this.conversationId = conversationId
+    this.parentMessageId = parentMessageId
+    this.params = params
   }
 }
 
-export default Response;
+export default Response

@@ -1,7 +1,7 @@
 const QuestionType = {
-  ChatGPT: "ChatGPT",
-  Gpt4: "GPT4",
-  Bard: "Bard",
-};
+  ChatGPT: 'ChatGPT',
+  Gpt4: 'GPT4',
+  Bard: 'Bard'
+}
 
-export default QuestionType;
+export default QuestionType
