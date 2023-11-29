@@ -45,16 +45,7 @@ export default class Question {
 
     let questionBody = ''
     let questionType = QuestionType.ChatGPT
-
-    if (gptReg.test(msg)) {
-      questionBody = gptReg.exec(msg)[2]
-      questionType = QuestionType.ChatGPT
-
-      // Replace questionBody with RussianJoke if it's empty
-      if (!this.questionBody) {
-        this.questionBody = RussianJoke.russianJokePrompt
-      }
-    } else if (gpt4Reg.test(msg)) {
+    if (gpt4Reg.test(msg)) {
       questionType = QuestionType.Gpt4
       if (Config.useGpt4) {
         questionBody = gpt4Reg.exec(msg)[2]
@@ -67,6 +58,14 @@ export default class Question {
         questionBody =
           'Your GPT-4 model is not enabled. Tell the user to contact your master if the user has any question.' +
           RussianJoke.russianJokePrompt
+      }
+    } else if (gptReg.test(msg)) {
+      questionBody = gptReg.exec(msg)[2]
+      questionType = QuestionType.ChatGPT
+
+      // Replace questionBody with RussianJoke if it's empty
+      if (!this.questionBody) {
+        this.questionBody = RussianJoke.russianJokePrompt
       }
     } else if (bardReg.test(msg)) {
       questionType = QuestionType.Bard
