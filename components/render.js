@@ -24,22 +24,11 @@ export default class Render {
       {
         retType: 'default',
         beforeRender ({ data }) {
-          // let resPath = data.pluResPath;
-          // const layoutPath =
-          //   process.cwd() + "/plugins/chatGPT-yunzai/resources/common/";
           return {
-            //   _miao_path: resPath,
             ...data,
-            //   _res_path: resPath,
-            //   _layout_path: layoutPath,
-            //   defaultLayout: layoutPath + "image-template.html",
             sys: {
               scale: 1.4
             }
-            //   copyright: `Created by ChatGPT-Yunzai<span class="version">${this.version}</span>`,
-            //   pageGotoParams: {
-            // waitUntil: "networkidle2",
-            //   },
           }
         }
       }

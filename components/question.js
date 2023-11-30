@@ -1,8 +1,9 @@
 import RussianJoke from './russianJoke.js'
-import { Config } from '../config/config.js'
+import {Config} from '../config/config.js'
 import QuestionType from './question/QuestionType.js'
 import Data from './data.js'
 import QuestionData from './question/QuestionData.js'
+import random from 'googlebard/src/utils/random.js'
 
 /**
  * Remember to init it after creating a new Question
@@ -27,6 +28,7 @@ export default class Question {
     this.msg = msg
     this.params = params
     this.cfg = cfg
+    this.CONVERSATION_TIMEOUT = 600000
   }
 
   init = async () => {
@@ -98,6 +100,24 @@ export default class Question {
     return metaInfo
   }
 
+  refreshMetaInfo = async () => {
+    let currTime = new Date()
+    let utime = this.metaInfo.utime
+    if (typeof utime === "string") {
+      console.debug(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}`)
+      this.metaInfo = this.newMetaInfo();
+      return true
+    }
+    let timeElapsed = currTime - this.metaInfo.utime
+    let timeout = this.CONVERSATION_TIMEOUT
+    if (timeElapsed > timeout) {
+      console.debug(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}`)
+      this.metaInfo = this.newMetaInfo();
+      return true
+    }
+    return false
+  }
+
   setMetaInfo = async (metaInfo) => {
     try {
       await Data.setMetaInfo(this.user_id, metaInfo)
@@ -113,7 +133,7 @@ export default class Question {
 
   updateMetaInfo = async (parentMessageId, conversationId) => {
     let metaInfo = this.metaInfo
-    metaInfo.utime = new Date().toLocaleString()
+    metaInfo.utime = new Date()
     let thisInfo
 
     switch (this.questionType) {
@@ -138,7 +158,7 @@ export default class Question {
   }
 
   newMetaInfo = () => {
-    let ctime = new Date().toLocaleString()
+    let ctime = new Date()
     let conversationId = this.sender.user_id
     return {
       ctime,

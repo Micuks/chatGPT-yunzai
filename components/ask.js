@@ -18,6 +18,9 @@ const bard = new BardAPI()
  * @returns {Promise<Response>}
  */
 export const askAndReply = async (questionInstance, cfg = {}) => {
+  if(questionInstance.refreshMetaInfo()) {
+    await bard.resetConversation(questionInstance.metaInfo.conversationId)
+  }
   let toAsk = chatGptAskAndReply
   switch (questionInstance.questionType) {
     case QuestionType.ChatGPT:

@@ -1,5 +1,5 @@
-import { Bard } from 'googlebard'
-import { Config } from '../../config/config.js'
+import {Bard} from 'googlebard'
+import {Config} from '../../config/config.js'
 import Response from '../question/Response.js'
 
 class BardAPI {
@@ -62,6 +62,10 @@ class BardAPI {
     }
 
     return response
+  }
+
+  resetConversation = async (conversationId) => {
+    this.Bard.resetConversation(conversationId)
   }
 }
 
