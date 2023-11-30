@@ -102,14 +102,14 @@ export default class Question {
     let currTime = new Date()
     let utime = this.metaInfo.utime
     if (typeof utime === "string") {
-      console.debug(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}`)
+      console.debug(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}]`)
       this.metaInfo = this.newMetaInfo();
       return true
     }
     let timeElapsed = currTime - this.metaInfo.utime
     let timeout = this.CONVERSATION_TIMEOUT
     if (timeElapsed > timeout) {
-      console.debug(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}`)
+      console.debug(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}]`)
       this.metaInfo = this.newMetaInfo();
       return true
     }
