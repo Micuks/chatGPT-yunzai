@@ -2,8 +2,6 @@ import RussianJoke from './russianJoke.js'
 import {Config} from '../config/config.js'
 import QuestionType from './question/QuestionType.js'
 import Data from './data.js'
-import QuestionData from './question/QuestionData.js'
-import random from 'googlebard/src/utils/random.js'
 
 /**
  * Remember to init it after creating a new Question
