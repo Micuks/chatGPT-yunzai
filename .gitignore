@@ -2,3 +2,8 @@ config/config.js
 node_modules
 .env
 apps/forward.js
+.idea/vcs.xml
+.idea/modules.xml
+.idea/chatGPT-yunzai.iml
+.idea
+.uuid
