@@ -1,4 +1,4 @@
-import RussianJoke from './russianJoke.js'
+import BlankPrompt from './blankPrompt.js'
 import {Config} from '../config/config.js'
 import QuestionType from './question/QuestionType.js'
 import Data from './data.js'
@@ -52,12 +52,12 @@ export default class Question {
 
         // Replace questionBody with RussianJoke if it's empty
         if (!this.questionBody) {
-          this.questionBody = RussianJoke.russianJokePrompt
+          this.questionBody = BlankPrompt.blankPrompt
         }
       } else {
         questionBody =
           'Your GPT-4 model is not enabled. Tell the user to contact your master if the user has any question.' +
-          RussianJoke.russianJokePrompt
+          BlankPrompt.blankPrompt
       }
     } else if (gptReg.test(msg)) {
       questionBody = gptReg.exec(msg)[2]
@@ -65,7 +65,7 @@ export default class Question {
 
       // Replace questionBody with RussianJoke if it's empty
       if (!this.questionBody) {
-        this.questionBody = RussianJoke.russianJokePrompt
+        this.questionBody = BlankPrompt.blankPrompt
       }
     } else if (bardReg.test(msg)) {
       questionType = QuestionType.Bard
@@ -74,15 +74,15 @@ export default class Question {
 
         // Replace questionBody with RussianJoke if it's empty
         if (!this.questionBody) {
-          this.questionBody = RussianJoke.russianJokePrompt
+          this.questionBody = BlankPrompt.blankPrompt
         }
       } else {
         questionBody =
           'Your Bard feature is disabled. Tell the user that if he has any question, contact your master.' +
-          RussianJoke.russianJokePrompt
+          BlankPrompt.blankPrompt
       }
     } else {
-      questionBody = RussianJoke.russianJokePrompt
+      questionBody = BlankPrompt.blankPrompt
     }
 
     this.questionBody = questionBody

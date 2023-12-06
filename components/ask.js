@@ -126,7 +126,7 @@ const gpt4AskAndReply = async (questionInstance, cfg = {}) => {
     let model = getModel(questionType)
 
     let params = {
-      systemMessage: `You are ChatGPT, a large language model trained by OpenAI, ran and maintained by micuks, based on the GPT-4 architecture. Knowledge cutoff: 2023-06 Current date: ${new Date().toISOString()}. Your answer should be in Chinese by default. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\nIf the question is empty, introduce an algorithm, and introduce yourself at the same time.\n`,
+      systemMessage: `You are ChatGPT, a large language model trained by OpenAI, ran and maintained by micuks, based on the GPT-4 architecture. Knowledge cutoff: 2023-06 Current date: ${new Date().toISOString()}. Your answer should be in Chinese by default. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\n`,
       conversationId,
       parentMessageId,
       model
@@ -166,7 +166,7 @@ const bardAskAndReply = async (questionInstance, cfg = {}) => {
     let model = getModel(questionType)
 
     let params = {
-      systemMessage: `Current date: ${new Date().toISOString()}. Your answer should be in Chinese by default. And Your answer should be **in pure text**, no photos, no videos and no other media forms. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\nIf the question following this paragraph is empty, introduce an algoritm in Chinese, and introduce yourself at the same time, without the user's confirmation.\n`,
+      systemMessage: `Current date: ${new Date().toISOString()}. Your answer should be in Chinese by default. And Your answer should be **in pure text**, no photos, no videos and no other media forms. If someone ask you who you are, tell him he can know more about you at "https://github.com/Micuks/chatGPT-yunzai"\n`,
       conversationId: metaInfo.conversationId,
       parentMessageId: metaInfo.parentMessageId,
       model
