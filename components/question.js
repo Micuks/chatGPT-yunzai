@@ -1,5 +1,5 @@
 import BlankPrompt from './blankPrompt.js'
-import {Config} from '../config/config.js'
+import { Config } from '../config/config.js'
 import QuestionType from './question/QuestionType.js'
 import Data from './data.js'
 
@@ -16,10 +16,17 @@ export default class Question {
    * @param {string} cfg.msg Message
    */
   constructor (questionData, cfg = {}) {
-    const { e, resetExpired } = cfg
+    const {
+      e,
+      resetExpired
+    } = cfg
     this.e = e
     this.resetExpired = resetExpired
-    const { sender, msg, params } = questionData
+    const {
+      sender,
+      msg,
+      params
+    } = questionData
     this.questionData = questionData
     this.sender = sender
     this.user_id = this.sender.user_id
@@ -101,16 +108,18 @@ export default class Question {
   refreshMetaInfo = async () => {
     let currTime = new Date()
     let utime = this.metaInfo.utime
-    if (typeof utime === "string") {
-      console.log(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}]`)
-      this.metaInfo = this.newMetaInfo();
-      return true
+    if (typeof utime === 'string') {
+      utime = new Date(utime)
     }
-    let timeElapsed = currTime - this.metaInfo.utime
+    let timeElapsed = currTime - utime
     let timeout = this.CONVERSATION_TIMEOUT
-    if (timeElapsed > timeout) {
-      console.log(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}]`)
-      this.metaInfo = this.newMetaInfo();
+    if (!utime || !(utime instanceof Date) || timeElapsed > timeout || !this.metaInfo) {
+      if (!this.metaInfo.sender) {
+        console.log(`Refreshed conversation for user. Time elapsed: ${timeElapsed} ms`)
+      } else {
+        console.log(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}]. Time elapsed: ${timeElapsed} ms`)
+      }
+      this.metaInfo = this.newMetaInfo()
       // Persistent meta info
       await this.setMetaInfo(this.metaInfo)
       return true
@@ -150,7 +159,7 @@ export default class Question {
         console.log(`Unknown question type: ${this.questionType}`)
         break
     }
-    thisInfo.count += 1
+    thisInfo.count = thisInfo.count + 1
     thisInfo.parentMessageId = parentMessageId || thisInfo.parentMessageId
     thisInfo.conversationId = conversationId || thisInfo.conversationId
 
