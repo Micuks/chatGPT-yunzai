@@ -117,7 +117,7 @@ export default class QuestionQueue {
         }
 
         // Update meta info
-        questionInstance.updateMetaInfo(
+        await questionInstance.updateMetaInfo(
           response.parentMessageId,
           response.conversationId
         )

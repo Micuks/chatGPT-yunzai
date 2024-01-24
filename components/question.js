@@ -102,15 +102,17 @@ export default class Question {
     let currTime = new Date()
     let utime = this.metaInfo.utime
     if (typeof utime === "string") {
-      console.debug(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}]`)
+      console.log(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}]`)
       this.metaInfo = this.newMetaInfo();
       return true
     }
     let timeElapsed = currTime - this.metaInfo.utime
     let timeout = this.CONVERSATION_TIMEOUT
     if (timeElapsed > timeout) {
-      console.debug(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}]`)
+      console.log(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}]`)
       this.metaInfo = this.newMetaInfo();
+      // Persistent meta info
+      await this.setMetaInfo(this.metaInfo)
       return true
     }
     return false
@@ -150,7 +152,7 @@ export default class Question {
     }
     thisInfo.count += 1
     thisInfo.parentMessageId = parentMessageId || thisInfo.parentMessageId
-    thisInfo.conversationId = conversationId || this.conversationId
+    thisInfo.conversationId = conversationId || thisInfo.conversationId
 
     await this.setMetaInfo(metaInfo)
   }
@@ -177,109 +179,6 @@ export default class Question {
         parentMessageId: undefined,
         conversationId
       }
-    }
-  }
-
-  /**
-   * @deprecated
-   * @returns
-   */
-  bardGetOrCreatePrevChat = async () => {
-    let prevChat = await redis.get(`CHATGPT:BARD_CHATS:${this.sender.user_id}`)
-    if (!prevChat) {
-      logger.info(
-        `No previous bard chat for ${this.sender.nickname}[${this.sender.user_id}]`
-      )
-      prevChat = this.createNewPrevChat('Bard')
-    } else {
-      try {
-        prevChat = await JSON.parse(prevChat)
-      } catch (e) {
-        logger.error(e)
-        prevChat = this.createNewPrevChat('Bard')
-      }
-    }
-    const timeElapsed = Math.abs(prevChat.ctime - Date.now()) / 1000
-    const timeOut = 600
-    if (timeElapsed > timeOut) {
-      logger.info(
-        `Your chat expired: ${timeElapsed} seconds passed after your last active time.`
-      )
-      prevChat = this.createNewPrevChat('Bard')
-    }
-
-    await redis.set(
-      `CHATGPT:BARD_CHATS:${this.sender.user_id}`,
-      JSON.stringify(prevChat)
-    )
-
-    return prevChat
-  }
-
-  /**
-   * @deprecated
-   * @returns
-   */
-  gptGetOrCreatePrevChat = async () => {
-    let prevChat = await redis.get(`CHATGPT:CHATS:${this.sender.user_id}`)
-    if (!prevChat) {
-      logger.info(
-        `No previous chats of ${this.sender.nickname}[${this.sender.user_id}]`
-      )
-      prevChat = this.createNewPrevChat()
-    } else {
-      try {
-        prevChat = await JSON.parse(prevChat)
-      } catch (e) {
-        logger.error(e)
-        prevChat = this.createNewPrevChat()
-      }
-    }
-
-    const timeElapsed = Math.abs(prevChat.ctime - Date.now()) / 1000
-    const timeOut = 600
-    if (timeElapsed > timeOut) {
-      logger.info(`Chat timeout: ${timeElapsed} seconds passed.`)
-      prevChat = this.createNewPrevChat()
-    }
-
-    await redis.set(
-      `CHATGPT:CHATS:${this.sender.user_id}`,
-      JSON.stringify(prevChat)
-    )
-
-    return prevChat
-  }
-
-  /**
-   * @deprecated
-   * @param {*} model
-   * @returns
-   */
-  async getOrCreatePrevChat (model = 'ChatGPT') {
-    if (model == 'Bard') {
-      const prevChat = await this.bardGetOrCreatePrevChat()
-      return prevChat
-    } else {
-      const prevChat = await this.gptGetOrCreatePrevChat()
-      return prevChat
-    }
-  }
-
-  /**
-   * @deprecated
-   * @param {string} model model name, ChatGPT or Bard
-   * @returns new PrevChat Object
-   */
-  createNewPrevChat = (model = 'ChatGPT') => {
-    const ctime = new Date()
-    return {
-      sender: this.sender,
-      count: 0,
-      ctime,
-      utime: ctime,
-      conversationId: model == 'Bard' ? this.sender.user_id : undefined,
-      parentMessageId: undefined
     }
   }
 }
