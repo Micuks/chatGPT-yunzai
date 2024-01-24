@@ -70,7 +70,7 @@ export default class Question {
       questionBody = gptReg.exec(msg)[2]
       questionType = QuestionType.ChatGPT
 
-      // Replace questionBody with RussianJoke if it's empty
+      // Replace questionBody with Blank Prompt if it's empty
       if (!this.questionBody) {
         this.questionBody = BlankPrompt.blankPrompt
       }
@@ -176,17 +176,17 @@ export default class Question {
       bardInfo: {
         count: 0,
         parentMessageId: undefined,
-        conversationId
+        conversationId: `${conversationId}-bard`
       },
       chatGptInfo: {
         count: 0,
         parentMessageId: undefined,
-        conversationId
+        conversationId: `${conversationId}-chatgpt`
       },
       gpt4Info: {
         count: 0,
         parentMessageId: undefined,
-        conversationId
+        conversationId: `${conversationId}-gpt4`
       }
     }
   }
