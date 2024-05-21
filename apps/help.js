@@ -19,9 +19,9 @@ export class help extends plugin {
 
   async help(e) {
     await this.reply(
-        `询问问题: ?|!|gpt问题\n` +
-        (Config.useGpt4 ? `**和GPT-4交谈**: gpt4|4问题\n` : ``) +
-        (Config.useBard ? `**和Google Bard交谈**: B问题\n` : ``) +
+        `询问问题: ?|!|gpt 问题\n` +
+        (Config.useGpt4 ? `**和GPT-4交谈**: gpt4 问题\n` : ``) +
+        (Config.useBard ? `**和Google Bard交谈**: bard 问题\n` : ``) +
         `十分钟内无交流会重置对话`
     );
   }

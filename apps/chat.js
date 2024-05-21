@@ -25,7 +25,7 @@ export class chatgpt extends plugin {
       priority: 65536, // Larger number, lower priority
       rule: [
         {
-          reg: '^[\\s]*(\\?|？|!|！|gpt|/gpt|4|/gpt4|gpt4|B|bard|/bard)[\\s\\S]*$',
+          reg: '^[\\s]*(\\?|？|!|！|gpt|/gpt|/gpt4|gpt4|[bB]ard|/[bB]ard)[\\s\\S]*$',
           fnc: 'chat'
         },
         {
