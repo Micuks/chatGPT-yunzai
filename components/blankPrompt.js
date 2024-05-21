@@ -1,6 +1,6 @@
 const BlankPrompt = {
   blankPrompt:
-    'Introduce yourself.'
+    'This is a blank prompt.'
 }
 
 export default BlankPrompt

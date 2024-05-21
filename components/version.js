@@ -3,11 +3,11 @@ import fs from 'node:fs'
 class version {
   constructor () {
     this.name = 'chatGPT-yunzai'
-    this.version = '0.0.0'
+    this.version = '0.0.1'
   }
 
   async init () {
-    let pwd = process.cwd()
+    const pwd = process.cwd()
     this._packageData = fs.readFileSync(
       `${pwd}/plugins/chatGPT-yunzai/package.json`,
       'utf8'
@@ -19,7 +19,7 @@ class version {
   }
 
   async getPacakgeInfo () {
-    return this._packageInfo
+    return await this._packageInfo
   }
 }
 
