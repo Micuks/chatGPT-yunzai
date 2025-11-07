@@ -70,6 +70,36 @@ please [Open an issue](https://github.com/Micuks/chatGPT-yunzai/issues).
 **About proxy**: If you want to set proxy and other things, refer to (#Config)
 section.
 
+### Standalone testing (without Yunzai-Bot)
+
+You can exercise the plugin logic directly from this repository without
+starting Yunzai-Bot. This is helpful when validating custom OpenAI-compatible
+endpoints such as a local [Moonshot Kimi](https://kimi.moonshot.cn/) instance.
+
+1. Install dependencies inside the plugin directory:
+
+   ```bash
+   pnpm install
+   # or npm install
+   ```
+
+2. Copy `config/config.default.js` to `config/config.js` (if you have not
+   already) and enable/configure the provider you want to test. A `kimi`
+   example that points to `http://127.0.0.1:18800/v1/chat/completions` is
+   included in the default file.
+
+3. Run the standalone helper:
+
+   ```bash
+   pnpm run standalone -- --list
+   pnpm run standalone -- --provider kimi --message "你好"
+   ```
+
+   The helper keeps conversation state in memory, honours trigger matching, and
+   prints the model response directly to the terminal. Use `--no-mention` if you
+   do not want to force the default model, or leave `--provider` empty to rely
+   on trigger keywords.
+
 ### Usage - Official ChatGPT
 
 0. Sign up for an [OpenAI API Key](https://platform.openai.com/overview), this is

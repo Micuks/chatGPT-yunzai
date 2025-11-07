@@ -51,6 +51,34 @@ OpenAI 刚刚发布的 GPT-4 模型现已在此插件的 Unofficial 版本下得
 **关于代理**：如果要设置代理等，参考(#配置)
 部分。
 
+### 独立测试（无需 Yunzai-Bot）
+
+现在可以在不启动 Yunzai-Bot 的情况下直接调用插件逻辑，方便验证自建
+或自定义的 OpenAI 兼容模型（例如运行在 `http://127.0.0.1:18800` 上的
+Kimi-K2）。
+
+1. 在插件目录内安装依赖：
+
+   ```bash
+   pnpm install
+   # 或 npm install
+   ```
+
+2. 将 `config/config.default.js` 复制为 `config/config.js`（如果尚未配置）
+   并按需开启或调整要测试的模型。默认文件已经提供了指向
+   `http://127.0.0.1:18800/v1/chat/completions` 的 `kimi` 示例。
+
+3. 执行独立测试脚本：
+
+   ```bash
+   pnpm run standalone -- --list
+   pnpm run standalone -- --provider kimi --message "你好"
+   ```
+
+   脚本会在终端输出模型回复，并在内存中保留对话上下文。若不希望强制
+   @ 触发默认模型，可追加 `--no-mention`，也可以省略 `--provider` 依靠
+   触发词自动匹配。
+
 ### 用法 - 官方 ChatGPT
 
 0.注册一个[OpenAI API Key](https://platform.openai.com/overview)，这是

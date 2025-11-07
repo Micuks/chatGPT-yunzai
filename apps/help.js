@@ -1,5 +1,5 @@
 import plugin from "../../../lib/plugins/plugin.js";
-import { Config } from "../config/config.js";
+import { Config } from "../config/runtime.js";
 
 export class help extends plugin {
   constructor(e) {
@@ -18,11 +18,36 @@ export class help extends plugin {
   }
 
   async help(e) {
-    await this.reply(
-        `询问问题: ?|!|gpt 问题\n` +
-        (Config.useGpt4 ? `**和GPT-4交谈**: gpt4 问题\n` : ``) +
-        (Config.useBard ? `**和Google Bard交谈**: bard 问题\n` : ``) +
-        `十分钟内无交流会重置对话`
+    const providers = (Config.modelProviders || []).filter(
+      (item) => item && item.enabled !== false
     );
+    const providerNames = providers.map((item) => item.name).join(" / ");
+    const triggerHints = providers
+      .map((item) => {
+        const triggers = Array.isArray(item.triggers)
+          ? item.triggers
+          : item.rawTriggers;
+        if (!Array.isArray(triggers) || triggers.length === 0) return null;
+        const samples = triggers
+          .map((token) => (typeof token === "string" ? token : null))
+          .filter(Boolean)
+          .slice(0, 3);
+        if (!samples.length) return null;
+        return `${item.name}: ${samples.join(", ")}`;
+      })
+      .filter(Boolean);
+
+    const parts = [
+      "询问问题: ? | ! | gpt + 内容，或直接 @ 机器人提问",
+      "十分钟内无交流会重置对话",
+      "使用 #模型设置 查看并切换可用模型" +
+        (providerNames ? `（当前可选：${providerNames}）` : "")
+    ];
+
+    if (triggerHints.length) {
+      parts.push("", "触发词示例:", ...triggerHints);
+    }
+
+    await this.reply(parts.join("\n"));
   }
 }

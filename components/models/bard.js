@@ -1,24 +1,30 @@
-import {Bard} from 'googlebard'
-import {Config} from '../../config/config.js'
+import { Bard } from 'googlebard'
+import { Config } from '../../config/runtime.js'
 import Response from '../question/Response.js'
 
 class BardAPI {
-  constructor () {
-    if (!Config.useBard) {
+  constructor (provider) {
+    this.provider = provider
+    const enabled = provider ? provider.enabled !== false : false
+
+    if (!enabled) {
       console.log('Bard is not enabled')
       this.Bard = undefined
+      return
     }
 
     const proxyParams = this.setProxy()
     let params = { proxy: proxyParams }
 
-    this._bardCookie = Config.bardCookie
+    this._bardCookie =
+      provider?.request?.cookie || provider?.cookie || Config.bardCookie
     this._params = params
     this.Bard = new Bard(this._bardCookie, this._params)
   }
 
   setProxy () {
-    let proxy = Config.proxy
+    const providerProxy = this.provider?.request?.proxy
+    let proxy = providerProxy || Config.proxy
     if (proxy) {
       logger.info(`Use proxy ${proxy} for bard.`)
       let proxySlice = proxy.split(':')
@@ -50,7 +56,7 @@ class BardAPI {
     let response
 
     if (this.Bard === undefined || this.Bard === null) {
-      console.log('Bard is not enabled, don\'t force me to do this...')
+      throw new Error('Bard is not enabled, please enable it in config.')
     }
     try {
       res = await this.Bard.ask(questionBody, conversationId)
@@ -65,7 +71,9 @@ class BardAPI {
   }
 
   resetConversation = async (conversationId) => {
-    this.Bard.resetConversation(conversationId)
+    if (this.Bard && typeof this.Bard.resetConversation === 'function') {
+      this.Bard.resetConversation(conversationId)
+    }
   }
 }
 
