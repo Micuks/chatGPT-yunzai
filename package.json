@@ -5,10 +5,14 @@
   "type": "module",
   "author": "Louis Wu",
   "license": "MIT",
+  "scripts": {
+    "standalone": "node scripts/standalone.js"
+  },
   "dependencies": {
     "bull": "^4.11.3",
     "chatgpt": "^5.2.5",
     "googlebard": "^1.0.7",
-    "https-proxy-agent": "^6.2.1"
+    "https-proxy-agent": "^6.2.1",
+    "node-fetch": "^3.3.2"
   }
 }

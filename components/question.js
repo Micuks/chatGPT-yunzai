@@ -1,7 +1,6 @@
 import BlankPrompt from './blankPrompt.js'
-import { Config } from '../config/config.js'
-import QuestionType from './question/QuestionType.js'
 import Data from './data.js'
+import { getModelRegistry } from './models/model-registry.js'
 
 /**
  * Remember to init it after creating a new Question
@@ -34,72 +33,125 @@ export default class Question {
     this.params = params
     this.cfg = cfg
     this.CONVERSATION_TIMEOUT = 600000
+    this.registry = getModelRegistry()
+    this.modelProfile = undefined
+    this.session = undefined
+    this.shouldReply = true
+    this.wasMentioned = false
+    this.normalizedMessage = undefined
   }
 
   init = async () => {
     this.metaInfo = await this.getMetaInfo()
 
-    // Get questionBody and questionType{ChatGPT, Bard}
     await this.parseQuestion()
+
+    if (!this.shouldReply) {
+      return
+    }
+
+    this.session = this.ensureSession()
   }
 
   parseQuestion = async () => {
-    let gptReg = /^(\?|!|gpt|\/gpt)(.*)$/
-    let gpt4Reg = /^(4|\/gpt4|gpt4)(.*)$/
-    let bardReg = /^(B|bard|\/bard)(.*)$/
+    const params = this.params || {}
+    const {
+      normalizedMessage,
+      wasMentioned,
+      providerKey,
+      questionBody
+    } = params
+    let matchReason = params.matchReason
+    let messageInfo
 
-    let msg = this.e.msg
-
-    let questionBody = ''
-    let questionType = QuestionType.ChatGPT
-    if (gpt4Reg.test(msg)) {
-      questionType = QuestionType.Gpt4
-      if (Config.useGpt4) {
-        questionBody = gpt4Reg.exec(msg)[2]
-
-        // Replace questionBody with RussianJoke if it's empty
-        if (!this.questionBody) {
-          this.questionBody = BlankPrompt.blankPrompt
-        }
-      } else {
-        questionBody =
-          'Your GPT-4 model is not enabled. Tell the user to contact your master if the user has any question.' +
-          BlankPrompt.blankPrompt
-      }
-    } else if (gptReg.test(msg)) {
-      questionBody = gptReg.exec(msg)[2]
-      questionType = QuestionType.ChatGPT
-
-      // Replace questionBody with Blank Prompt if it's empty
-      if (!this.questionBody) {
-        this.questionBody = BlankPrompt.blankPrompt
-      }
-    } else if (bardReg.test(msg)) {
-      questionType = QuestionType.Bard
-      if (Config.useBard) {
-        questionBody = bardReg.exec(msg)[2]
-
-        // Replace questionBody with RussianJoke if it's empty
-        if (!this.questionBody) {
-          this.questionBody = BlankPrompt.blankPrompt
-        }
-      } else {
-        questionBody =
-          'Your Bard feature is disabled. Tell the user that if he has any question, contact your master.' +
-          BlankPrompt.blankPrompt
-      }
+    if (typeof normalizedMessage === 'string') {
+      this.normalizedMessage = normalizedMessage
+      this.wasMentioned = Boolean(wasMentioned)
+      messageInfo = { text: normalizedMessage, wasMentioned: this.wasMentioned }
     } else {
-      questionBody = BlankPrompt.blankPrompt
+      messageInfo = this.normalizeMessage()
     }
 
-    this.questionBody = questionBody
-    this.questionType = questionType
+    let provider = undefined
+    let body = questionBody
+
+    if (providerKey) {
+      provider = this.registry.getByKey(providerKey)
+    }
+
+    if (!provider) {
+      const match = this.registry.match(messageInfo.text, {
+        forceDefault: messageInfo.wasMentioned
+      })
+      provider = match.provider
+      if (body === undefined) {
+        body = match.body
+      }
+      if (!matchReason) {
+        matchReason = match.reason
+        params.matchReason = matchReason
+      }
+    }
+
+    const preferredKey = this.metaInfo?.preferredModel
+    const preferredProvider = preferredKey
+      ? this.registry.getByKey(preferredKey)
+      : undefined
+
+    if (
+      preferredProvider &&
+      (!provider ||
+        matchReason === 'forced-default' ||
+        matchReason === 'forced-default-empty')
+    ) {
+      provider = preferredProvider
+    }
+
+    if (!provider) {
+      provider = this.registry.getDefault()
+    }
+
+    if (!provider) {
+      this.shouldReply = false
+      this.questionBody = ''
+      return
+    }
+
+    this.modelProfile = provider
+    this.questionType = provider.key
+
+    const content = typeof body === 'string' ? body.trim() : messageInfo.text
+    this.questionBody = content && content.length > 0 ? content : BlankPrompt.blankPrompt
   }
 
   getMetaInfo = async () => {
     let metaInfo = await Data.getMetaInfo(this.sender.user_id)
     if (!metaInfo) {
       metaInfo = this.newMetaInfo()
+    } else if (!metaInfo.sessions) {
+      const migrated = this.newMetaInfo()
+      migrated.ctime = metaInfo.ctime ? new Date(metaInfo.ctime) : new Date()
+      migrated.utime = metaInfo.utime ? new Date(metaInfo.utime) : new Date()
+      migrated.sender = metaInfo.sender || this.sender
+
+      const legacyToSession = (info, key) => {
+        if (!info) return
+        migrated.sessions[key] = {
+          key,
+          count: info.count || 0,
+          conversationId:
+            info.conversationId || `${this.sender.user_id}-${key}`,
+          parentMessageId: info.parentMessageId,
+          history: []
+        }
+      }
+
+      legacyToSession(metaInfo.chatGptInfo, 'chatgpt')
+      legacyToSession(metaInfo.gpt4Info, 'gpt4')
+      legacyToSession(metaInfo.bardInfo, 'bard')
+
+      metaInfo = migrated
+      await this.setMetaInfo(metaInfo)
     }
 
     return metaInfo
@@ -119,10 +171,15 @@ export default class Question {
       } else {
         console.log(`Refreshed conversation for user${this.metaInfo.sender.nickname}[${this.metaInfo.sender.user_id}]. Time elapsed: ${timeElapsed} ms`)
       }
-      this.metaInfo = this.newMetaInfo()
+      const preferredModel = this.metaInfo?.preferredModel
+      this.metaInfo = this.newMetaInfo({ preferredModel })
       // Persistent meta info
       await this.setMetaInfo(this.metaInfo)
+      this.session = this.ensureSession(true)
       return true
+    }
+    if (this.modelProfile) {
+      this.session = this.ensureSession()
     }
     return false
   }
@@ -140,54 +197,114 @@ export default class Question {
     return true
   }
 
-  updateMetaInfo = async (parentMessageId, conversationId) => {
-    let metaInfo = this.metaInfo
-    metaInfo.utime = new Date()
-    let thisInfo
+  applyResponse = async (response) => {
+    if (!this.modelProfile) return
 
-    switch (this.questionType) {
-      case QuestionType.ChatGPT:
-        thisInfo = metaInfo.chatGptInfo
-        break
-      case QuestionType.Gpt4:
-        thisInfo = metaInfo.gpt4Info
-        break
-      case QuestionType.Bard:
-        thisInfo = metaInfo.bardInfo
-        break
-      default:
-        console.log(`Unknown question type: ${this.questionType}`)
-        break
+    const session = this.ensureSession()
+    if (!session) return
+
+    const now = new Date()
+    this.metaInfo.utime = now
+    session.count = (session.count || 0) + 1
+    session.parentMessageId = response?.parentMessageId || session.parentMessageId
+    session.conversationId = response?.conversationId || session.conversationId
+    session.lastResponseAt = now
+
+    if (!Array.isArray(session.history)) {
+      session.history = []
     }
-    thisInfo.count = thisInfo.count + 1
-    thisInfo.parentMessageId = parentMessageId || thisInfo.parentMessageId
-    thisInfo.conversationId = conversationId || thisInfo.conversationId
 
-    await this.setMetaInfo(metaInfo)
+    if (this.questionBody) {
+      session.history.push({ role: 'user', content: this.questionBody })
+    }
+
+    if (response?.text) {
+      session.history.push({ role: 'assistant', content: response.text })
+    }
+
+    const historySize = this.modelProfile.historySize ?? this.modelProfile.maxHistory ?? 6
+    if (historySize > 0 && session.history.length > historySize * 2) {
+      session.history = session.history.slice(-historySize * 2)
+    }
+
+    await this.setMetaInfo(this.metaInfo)
   }
 
-  newMetaInfo = () => {
-    let ctime = new Date()
-    let conversationId = this.sender.user_id
+  newMetaInfo = (overrides = {}) => {
+    const now = new Date()
     return {
-      ctime,
-      utime: ctime,
-      sender: this.sender,
-      bardInfo: {
+      ctime: overrides.ctime || now,
+      utime: overrides.utime || now,
+      sender: overrides.sender || this.sender,
+      preferredModel:
+        overrides.preferredModel !== undefined
+          ? overrides.preferredModel
+          : this.metaInfo?.preferredModel,
+      sessions: overrides.sessions || {}
+    }
+  }
+
+  ensureSession = (reset = false) => {
+    if (!this.modelProfile) return undefined
+    if (!this.metaInfo.sessions) {
+      this.metaInfo.sessions = {}
+    }
+
+    const key = this.modelProfile.key
+    const defaultConversationId = `${this.sender.user_id}-${key}`
+    let session = this.metaInfo.sessions[key]
+
+    if (!session || reset) {
+      session = {
+        key,
+        history: [],
         count: 0,
+        conversationId: defaultConversationId,
         parentMessageId: undefined,
-        conversationId: `${conversationId}-bard`
-      },
-      chatGptInfo: {
-        count: 0,
-        parentMessageId: undefined,
-        conversationId: `${conversationId}-chatgpt`
-      },
-      gpt4Info: {
-        count: 0,
-        parentMessageId: undefined,
-        conversationId: `${conversationId}-gpt4`
+        createdAt: new Date()
+      }
+    } else {
+      session.conversationId = session.conversationId || defaultConversationId
+      session.history = Array.isArray(session.history) ? session.history : []
+    }
+
+    this.metaInfo.sessions[key] = session
+    return session
+  }
+
+  getSession = () => {
+    if (!this.session) {
+      this.session = this.ensureSession()
+    }
+    return this.session
+  }
+
+  normalizeMessage = () => {
+    const segments = Array.isArray(this.e.message) ? this.e.message : []
+    let wasMentioned = false
+    const parts = []
+
+    if (segments.length > 0) {
+      for (const segment of segments) {
+        if (segment.type === 'at' && `${segment.qq}` === `${this.e.self_id}`) {
+          wasMentioned = true
+          continue
+        }
+
+        if (typeof segment.text === 'string') {
+          parts.push(segment.text)
+        }
       }
     }
+
+    let text = parts.join('')
+    if (!text) {
+      text = this.e.msg || ''
+    }
+
+    text = text.trim()
+    this.wasMentioned = wasMentioned
+    this.normalizedMessage = text
+    return { text, wasMentioned }
   }
 }

@@ -1,9 +1,8 @@
 import Bull from 'bull'
-import { Config } from '../config/config.js'
+import { Config } from '../config/runtime.js'
 import { askAndReply } from './ask.js'
 import Question from './question.js'
 import QuestionData from './question/QuestionData.js'
-import QuestionType from './question/QuestionType.js'
 import { error } from 'console'
 import postProcess from './reply.js'
 
@@ -75,7 +74,7 @@ export default class QuestionQueue {
    * @param {Question} questionInstance
    */
   responseNonsense (response, questionInstance) {
-    if (questionInstance.questionType === QuestionType.Bard) {
+    if ((questionInstance.modelProfile?.type || '').toLowerCase() === 'bard') {
       if (
         response.startsWith('TypeError: Cannot read properties of undefined') ||
         response === 'SWML_DESCRIPTION_FROM_YOUR_INTERNET_ADDRESS' ||
@@ -109,6 +108,13 @@ export default class QuestionQueue {
         let questionInstance = new Question(questionData, cfg)
         await questionInstance.init()
 
+        if (!questionInstance.shouldReply) {
+          console.debug(
+            `Job[${job.id}] issued by ${questionInstance.sender.nickname}[${questionInstance.sender.user_id}] ignored due to unmatched triggers.`
+          )
+          return 'IGNORED'
+        }
+
         let response = await askAndReply(questionInstance, cfg)
         let text = response.text
 
@@ -116,11 +122,7 @@ export default class QuestionQueue {
           throw error('nonsense Bard response')
         }
 
-        // Update meta info
-        await questionInstance.updateMetaInfo(
-          response.parentMessageId,
-          response.conversationId
-        )
+        await questionInstance.applyResponse(response)
 
         // Return text
         console.log(`Job[${job.id}] finished. Response: ${response.text}`)

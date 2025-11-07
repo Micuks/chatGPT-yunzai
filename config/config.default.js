@@ -1,54 +1,71 @@
-// === ChatGPT Settings ===
-// Your proxy url if you use a proxy
+// === Chat Models ===
+// Proxy address used by all providers (for example: http://127.0.0.1:7890)
 const PROXY = "";
 
-// Fill in if you use **OFFICIAL OPENAI DAVINCI MODEL**
+// Default API key for OpenAI-compatible providers
 const API_KEY = "";
 
-// true if you subscribed ChatGPT plus and
-const MODEL_PAID = false;
+// Base URL for OpenAI-compatible APIs
+const API_BASE_URL = "https://api.openai.com/v1";
 
-// true if you subscribed and want to use GPT-4
-const USE_GPT4 = false;
+// Request timeout (ms) for HTTP models
+const REQUEST_TIMEOUT = 60000;
 
 // === Google Bard settings ===
-const USE_BARD = false; // The master switch for Google Bard
 const BARD_COOKIE =
   "__Secure-1PSID=<**Fill in your __Secure-1PSID cookie section**>";
 // Your bard cookie. **Remember not to delete the __Secure-1PSID= prefix**
 
-// # Advanced configuration
-
-// Fill in the model you want to use
-const MODEL_NAME = "gpt-3.5-turbo-0301";
-
-// true if you use unofficial reverse proxy solution
-const USE_UNOFFICIAL = false;
-
-// Fill in if you use unofficial reverse proxy solution
-const API_ACCESS_TOKEN = "";
-/**
- * Fill in if you use unofficial reverse proxy solution.const (Optional)
- * You can get it from "https://chat.openai.com/api/auth/session"
- * The value of 'accessToken'
- */
-API_REVERSE_PROXY_URL = "https://api.pawan.krd/backend-api/conversation	";
-
 // Concurrency jobs, by default is 1
 const CONCURRENCY_JOBS = 1;
 
+// === Model routing ===
+// Configure triggers, API endpoint, and system prompt for each model.
+const MODEL_PROVIDERS = [
+  {
+    key: "chatgpt",
+    name: "OpenAI GPT-3.5 Turbo",
+    type: "openai",
+    default: true,
+    enabled: true,
+    triggers: ["?", "？", "!", "！", "gpt", "/gpt"],
+    request: {
+      baseUrl: API_BASE_URL,
+      path: "/chat/completions",
+      apiKey: API_KEY,
+      model: "gpt-3.5-turbo-0125",
+      timeout: REQUEST_TIMEOUT
+    },
+    systemMessage:
+      'You are ChatGPT, a large language model maintained by the bot owner. Default language: Chinese. Current date: {{current_datetime}}. If users need more information they can visit "https://github.com/Micuks/chatGPT-yunzai".'
+  },
+  {
+    key: "kimi",
+    name: "Moonshot Kimi",
+    type: "openai",
+    enabled: false,
+    triggers: ["kimi", "/kimi"],
+    request: {
+      url: "http://127.0.0.1:18800/v1/chat/completions",
+      apiKey: "",
+      model: "kimi-k2",
+      timeout: REQUEST_TIMEOUT,
+      headers: {
+        // Example: "Authorization": "Bearer YOUR_TOKEN"
+      }
+    },
+    systemMessage:
+      '你是 Moonshot Kimi，在中文环境下提供详细且安全的回答。当前日期：{{current_datetime}}。'
+  }
+];
+
 // *** You need not to modify the settings below ***
 export const Config = {
-  modelName: MODEL_NAME,
-  modelPaid: MODEL_PAID,
-  apiAccessToken: API_ACCESS_TOKEN,
-  useUnofficial: USE_UNOFFICIAL,
   proxy: PROXY,
-  api_key: API_KEY,
-  apiReverseProxyUrl: API_REVERSE_PROXY_URL,
-  usePicture: false,
-  useGpt4: USE_GPT4,
-  useBard: USE_BARD,
+  apiKey: API_KEY,
+  apiBaseUrl: API_BASE_URL,
   bardCookie: BARD_COOKIE,
   concurrencyJobs: CONCURRENCY_JOBS,
+  requestTimeout: REQUEST_TIMEOUT,
+  modelProviders: MODEL_PROVIDERS
 };

@@ -1,6 +1,5 @@
-import _ from 'lodash'
-
 const blockWords = ['Block1', 'Block2', 'Block3']
+const CHAT_EXPIRATION = 600
 
 export const isChatExpired = (date) => {
   const currTime = new Date()

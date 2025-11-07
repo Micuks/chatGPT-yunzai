@@ -1,8 +1,9 @@
 import _ from 'lodash'
 import plugin from '../../../lib/plugins/plugin.js'
-import Question from '../components/question.js'
 import QuestionData from '../components/question/QuestionData.js'
 import QuestionQueue from '../components/queue.js'
+import { getModelRegistry } from '../components/models/model-registry.js'
+import Data from '../components/data.js'
 
 const MAX_RETRIES = 5
 
@@ -11,6 +12,86 @@ const questionQueue = new QuestionQueue(
 )
 
 questionQueue.controller()
+
+const registry = getModelRegistry()
+
+const escapeRegExp = (str = '') => _.escapeRegExp(str)
+
+const computeTriggerRegex = () => {
+  const triggerSet = new Set()
+
+  registry.providers.forEach((provider) => {
+    const raw = provider.rawTriggers || []
+    raw
+      .filter((item) => typeof item === 'string')
+      .forEach((token) => triggerSet.add(token))
+  })
+
+  if (!triggerSet.size) {
+    ;['?', '？', '!', '！', 'gpt', '/gpt', 'gpt4', '/gpt4', 'bard', '/bard'].forEach((t) =>
+      triggerSet.add(t)
+    )
+  }
+
+  triggerSet.add('@')
+
+  const pattern = Array.from(triggerSet)
+    .map((token) => escapeRegExp(token))
+    .join('|')
+
+  return new RegExp(`^[\\s]*(?:${pattern})[\\s\\S]*$`, 'i')
+}
+
+const MESSAGE_TRIGGER_REGEX = computeTriggerRegex()
+
+const normalizeIncomingMessage = (e) => {
+  const segments = Array.isArray(e.message) ? e.message : []
+  let wasMentioned = false
+  const parts = []
+
+  if (segments.length) {
+    for (const segment of segments) {
+      if (segment.type === 'at' && `${segment.qq}` === `${e.self_id}`) {
+        wasMentioned = true
+        continue
+      }
+
+      if (typeof segment.text === 'string') {
+        parts.push(segment.text)
+      }
+    }
+  }
+
+  let text = parts.join('')
+  if (!text) {
+    text = e.msg || ''
+  }
+
+  return { text: text.trim(), wasMentioned }
+}
+
+const resolveQuestionContext = (e) => {
+  const messageInfo = normalizeIncomingMessage(e)
+  if (!messageInfo.text && !messageInfo.wasMentioned) {
+    return undefined
+  }
+
+  const match = registry.match(messageInfo.text, {
+    forceDefault: messageInfo.wasMentioned
+  })
+
+  if (!match.provider) {
+    return undefined
+  }
+
+  return {
+    providerKey: match.provider?.key,
+    questionBody: match.body,
+    normalizedMessage: messageInfo.text,
+    wasMentioned: messageInfo.wasMentioned,
+    matchReason: match.reason
+  }
+}
 
 export class chatgpt extends plugin {
   // TODO: timeout reset conversation
@@ -25,8 +106,12 @@ export class chatgpt extends plugin {
       priority: 65536, // Larger number, lower priority
       rule: [
         {
-          reg: '^[\\s]*(\\?|？|!|！|gpt|/gpt|/gpt4|gpt4|[bB]ard|/[bB]ard)[\\s\\S]*$',
+          reg: MESSAGE_TRIGGER_REGEX,
           fnc: 'chat'
+        },
+        {
+          reg: '^#模型设置(?:[\s]*\d+)?$',
+          fnc: 'configureModel'
         },
         {
           reg: '^#聊天列表$',
@@ -99,10 +184,100 @@ export class chatgpt extends plugin {
   }
 
   async chat (e) {
-    const msg = e.msg
-    const question = new QuestionData(msg, e)
+    const context = resolveQuestionContext(e)
+    if (!context) {
+      return false
+    }
+
+    const question = new QuestionData(e.msg, e, context)
 
     await this.doJob(e, question)
+  }
+
+  async configureModel (e) {
+    const text = (e.msg || '').trim()
+    const match = /^#模型设置(?:\s*(\d+))?$/.exec(text)
+    if (!match) {
+      return false
+    }
+
+    const selection = match[1]
+    const providers = registry.providers || []
+    if (!providers.length) {
+      await e.reply('暂无可用模型。请先在配置中启用至少一个模型。', true)
+      return true
+    }
+
+    const userId = e.sender?.user_id
+    if (!userId) {
+      await e.reply('未能识别用户身份，无法保存模型设置。', true)
+      return true
+    }
+
+    let meta = (userId && (await Data.getMetaInfo(userId))) || null
+    if (!meta) {
+      const now = new Date()
+      meta = {
+        ctime: now,
+        utime: now,
+        sender: e.sender,
+        sessions: {}
+      }
+    } else {
+      meta.sessions = meta.sessions || {}
+    }
+
+    const preferredKey = meta.preferredModel
+    const defaultKey = registry.getDefault()?.key
+
+    if (!selection) {
+      const lines = providers.map((provider, index) => {
+        const tags = []
+        if (provider.key === preferredKey) tags.push('当前')
+        if (provider.key === defaultKey) tags.push('默认')
+        const suffix = tags.length ? ` [${tags.join(', ')}]` : ''
+        return `${index + 1}. ${provider.name}${suffix}`
+      })
+      const triggers = providers
+        .map((provider) => {
+          if (!Array.isArray(provider.rawTriggers)) return null
+          const sample = provider.rawTriggers
+            .map((item) => (typeof item === 'string' ? item : null))
+            .filter(Boolean)
+            .slice(0, 3)
+          if (!sample.length) return null
+          return `${provider.name}: ${sample.join(', ')}`
+        })
+        .filter(Boolean)
+
+      const parts = [
+        '请选择要使用的模型：',
+        ...lines,
+        '',
+        '发送「#模型设置 序号」即可切换模型。'
+      ]
+
+      if (triggers.length) {
+        parts.push('', '常用触发词：', ...triggers)
+      }
+
+      await e.reply(parts.join('\n'), true)
+      return true
+    }
+
+    const index = Number.parseInt(selection, 10) - 1
+    if (Number.isNaN(index) || index < 0 || index >= providers.length) {
+      await e.reply('无效的模型序号，请重新选择。', true)
+      return true
+    }
+
+    const provider = providers[index]
+    meta.preferredModel = provider.key
+    meta.utime = new Date()
+    await Data.setMetaInfo(userId, meta)
+
+    await e.reply(`已切换到「${provider.name}」。`, true)
+    return true
   }
 
   async doJob (e, question, cfg = { first_time: true, ttl: MAX_RETRIES }) {
