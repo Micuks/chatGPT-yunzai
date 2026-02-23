@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import plugin from '../../../lib/plugins/plugin.js'
-import Question from '../components/question.js'
 import QuestionData from '../components/question/QuestionData.js'
 import QuestionQueue from '../components/queue.js'
 
@@ -25,7 +24,7 @@ export class chatgpt extends plugin {
       priority: 65536, // Larger number, lower priority
       rule: [
         {
-          reg: '^[\\s]*(\\?|？|!|！|gpt|/gpt|/gpt4|gpt4|[bB]ard|/[bB]ard)[\\s\\S]*$',
+          reg: '^[\\s]*(\\?|？|!|！|claw|/claw|gpt|/gpt)[\\s\\S]*$',
           fnc: 'chat'
         },
         {
@@ -54,18 +53,19 @@ export class chatgpt extends plugin {
   }
 
   async getChats (e) {
-    let keys = await redis.keys('CHATGPT:CHATS:*')
+    let keys = await redis.keys('CHATGPT:META:*')
     if (!keys || keys.length === 0) {
       await this.reply('No chats now.', true)
     } else {
       let response = 'Current chats:\n'
-      // response += 'Sender | Call counts | Start time | Last active time\n'
       await Promise.all(
         keys.map(async (key) => {
           let chat = await redis.get(key)
           if (chat) {
             chat = JSON.parse(chat)
-            response += `${chat.sender.nickname}:\n\tRequest count: ${chat.count}\n\tStart time: ${chat.ctime}\n\tLast active time: ${chat.utime}\n`
+            const openClawCount = chat?.openClawInfo?.count || 0
+            const chatGptCount = chat?.chatGptInfo?.count || 0
+            response += `${chat.sender.nickname}:\n\tOpenClaw count: ${openClawCount}\n\tLegacy ChatGPT count: ${chatGptCount}\n\tStart time: ${chat.ctime}\n\tLast active time: ${chat.utime}\n`
           }
         })
       )
@@ -77,22 +77,22 @@ export class chatgpt extends plugin {
   async destroyChat (e) {
     let atMessages = e.message.filter((m) => m.type === 'at')
     if (atMessages.length === 0) {
-      let chat = await redis.get(`CHATGPT:CHATS:${e.sender.user_id}`)
+      let chat = await redis.get(`CHATGPT:META:${e.sender.user_id}`)
       if (!chat) {
         await this.reply('You are not chatting with me.', true)
       } else {
-        await redis.del(`CHATGPT:CHATS:${e.sender.user_id}`)
+        await redis.del(`CHATGPT:META:${e.sender.user_id}`)
         await this.reply('Chat destroyed.', true)
       }
     } else {
       let at = atMessages[0]
       let qq = at.qq
       let atUser = _.trimStart(at.text, '@')
-      let chat = await redis.get(`CHATGPT:CHATS:${qq}`)
+      let chat = await redis.get(`CHATGPT:META:${qq}`)
       if (!chat) {
         await this.reply(`No chats are opened by ${atUser}`, true)
       } else {
-        await redis.del(`CHATGPT:CHATS:${qq}`)
+        await redis.del(`CHATGPT:META:${qq}`)
         await this.reply(`Destroyed chats of ${atUser}[${qq}]`, true)
       }
     }

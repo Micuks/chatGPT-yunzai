@@ -1,5 +1,4 @@
 import BlankPrompt from './blankPrompt.js'
-import { Config } from '../config/config.js'
 import QuestionType from './question/QuestionType.js'
 import Data from './data.js'
 
@@ -39,56 +38,30 @@ export default class Question {
   init = async () => {
     this.metaInfo = await this.getMetaInfo()
 
-    // Get questionBody and questionType{ChatGPT, Bard}
+    // Get questionBody and questionType
     await this.parseQuestion()
   }
 
   parseQuestion = async () => {
-    let gptReg = /^(\?|!|gpt|\/gpt)(.*)$/
-    let gpt4Reg = /^(4|\/gpt4|gpt4)(.*)$/
-    let bardReg = /^(B|bard|\/bard)(.*)$/
+    let openClawReg = /^(\?|？|!|！|claw|\/claw)([\s\S]*)$/i
+    let chatGptReg = /^(gpt|\/gpt)([\s\S]*)$/i
 
     let msg = this.e.msg
 
     let questionBody = ''
-    let questionType = QuestionType.ChatGPT
-    if (gpt4Reg.test(msg)) {
-      questionType = QuestionType.Gpt4
-      if (Config.useGpt4) {
-        questionBody = gpt4Reg.exec(msg)[2]
+    let questionType = QuestionType.OpenClaw
 
-        // Replace questionBody with RussianJoke if it's empty
-        if (!this.questionBody) {
-          this.questionBody = BlankPrompt.blankPrompt
-        }
-      } else {
-        questionBody =
-          'Your GPT-4 model is not enabled. Tell the user to contact your master if the user has any question.' +
-          BlankPrompt.blankPrompt
-      }
-    } else if (gptReg.test(msg)) {
-      questionBody = gptReg.exec(msg)[2]
+    if (chatGptReg.test(msg)) {
+      questionBody = chatGptReg.exec(msg)[2]
       questionType = QuestionType.ChatGPT
-
-      // Replace questionBody with Blank Prompt if it's empty
-      if (!this.questionBody) {
-        this.questionBody = BlankPrompt.blankPrompt
-      }
-    } else if (bardReg.test(msg)) {
-      questionType = QuestionType.Bard
-      if (Config.useBard) {
-        questionBody = bardReg.exec(msg)[2]
-
-        // Replace questionBody with RussianJoke if it's empty
-        if (!this.questionBody) {
-          this.questionBody = BlankPrompt.blankPrompt
-        }
-      } else {
-        questionBody =
-          'Your Bard feature is disabled. Tell the user that if he has any question, contact your master.' +
-          BlankPrompt.blankPrompt
-      }
+    } else if (openClawReg.test(msg)) {
+      questionType = QuestionType.OpenClaw
+      questionBody = openClawReg.exec(msg)[2]
     } else {
+      questionBody = BlankPrompt.blankPrompt
+    }
+
+    if (!questionBody || !questionBody.trim()) {
       questionBody = BlankPrompt.blankPrompt
     }
 
@@ -140,28 +113,35 @@ export default class Question {
     return true
   }
 
-  updateMetaInfo = async (parentMessageId, conversationId) => {
+  updateMetaInfo = async (response = {}) => {
     let metaInfo = this.metaInfo
     metaInfo.utime = new Date()
     let thisInfo
 
     switch (this.questionType) {
+      case QuestionType.OpenClaw:
+        thisInfo = metaInfo.openClawInfo
+        break
       case QuestionType.ChatGPT:
         thisInfo = metaInfo.chatGptInfo
-        break
-      case QuestionType.Gpt4:
-        thisInfo = metaInfo.gpt4Info
-        break
-      case QuestionType.Bard:
-        thisInfo = metaInfo.bardInfo
         break
       default:
         console.log(`Unknown question type: ${this.questionType}`)
         break
     }
+    if (!thisInfo) {
+      return
+    }
     thisInfo.count = thisInfo.count + 1
-    thisInfo.parentMessageId = parentMessageId || thisInfo.parentMessageId
-    thisInfo.conversationId = conversationId || thisInfo.conversationId
+    if (this.questionType === QuestionType.ChatGPT) {
+      thisInfo.parentMessageId =
+        response.parentMessageId || thisInfo.parentMessageId
+      thisInfo.conversationId = response.conversationId || thisInfo.conversationId
+    } else if (this.questionType === QuestionType.OpenClaw) {
+      const sessionKey =
+        response?.params?.sessionKey || response?.conversationId || thisInfo.sessionKey
+      thisInfo.sessionKey = sessionKey
+    }
 
     await this.setMetaInfo(metaInfo)
   }
@@ -173,20 +153,14 @@ export default class Question {
       ctime,
       utime: ctime,
       sender: this.sender,
-      bardInfo: {
+      openClawInfo: {
         count: 0,
-        parentMessageId: undefined,
-        conversationId: `${conversationId}-bard`
+        sessionKey: `yunzai:qq:${conversationId}`
       },
       chatGptInfo: {
         count: 0,
         parentMessageId: undefined,
         conversationId: `${conversationId}-chatgpt`
-      },
-      gpt4Info: {
-        count: 0,
-        parentMessageId: undefined,
-        conversationId: `${conversationId}-gpt4`
       }
     }
   }

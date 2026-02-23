@@ -19,10 +19,9 @@ export class help extends plugin {
 
   async help(e) {
     await this.reply(
-        `询问问题: ?|!|gpt 问题\n` +
-        (Config.useGpt4 ? `**和GPT-4交谈**: gpt4 问题\n` : ``) +
-        (Config.useBard ? `**和Google Bard交谈**: bard 问题\n` : ``) +
-        `十分钟内无交流会重置对话`
+        `OpenClaw 对话: ?|!|claw 问题\n` +
+        (Config.legacyChatGptEnabled ? `Legacy ChatGPT 回退: gpt 问题\n` : ``) +
+        `十分钟内无交流会重置会话`
     );
   }
 }
