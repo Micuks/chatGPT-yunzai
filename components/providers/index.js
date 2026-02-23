@@ -4,8 +4,8 @@ import OpenClawApi from '../models/openclaw.js'
 import QuestionType from '../question/QuestionType.js'
 import Response from '../question/Response.js'
 
-const chatGptApi = new ChatGptApi()
 const openClawApi = new OpenClawApi()
+let chatGptApi
 
 const buildOpenClawProvider = () => ({
   type: QuestionType.OpenClaw,
@@ -28,6 +28,17 @@ const buildChatGptProvider = () => ({
         undefined,
         undefined
       )
+    }
+    if (!chatGptApi) {
+      try {
+        chatGptApi = new ChatGptApi()
+      } catch (err) {
+        return new Response(
+          `Legacy ChatGPT init failed: ${err?.message || err}`,
+          undefined,
+          undefined
+        )
+      }
     }
 
     const questionBody = questionInstance.questionBody
