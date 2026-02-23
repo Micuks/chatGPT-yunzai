@@ -2,9 +2,6 @@ import Bull from 'bull'
 import { Config } from '../config/config.js'
 import { askAndReply } from './ask.js'
 import Question from './question.js'
-import QuestionData from './question/QuestionData.js'
-import QuestionType from './question/QuestionType.js'
-import { error } from 'console'
 import postProcess from './reply.js'
 
 const MAX_RETRIES = 5
@@ -13,8 +10,6 @@ export default class QuestionQueue {
   constructor (name) {
     this.name = name || 'questionQueue'
     this.queue = new Bull(this.name)
-    this.chatGPTAPI = undefined
-    this.bardAPI = undefined
 
     this.messageEvents = new Map()
   }
@@ -69,27 +64,6 @@ export default class QuestionQueue {
     return concurrencyJobs
   }
 
-  /**
-   *
-   * @param {string} response
-   * @param {Question} questionInstance
-   */
-  responseNonsense (response, questionInstance) {
-    if (questionInstance.questionType === QuestionType.Bard) {
-      if (
-        response.startsWith('TypeError: Cannot read properties of undefined') ||
-        response === 'SWML_DESCRIPTION_FROM_YOUR_INTERNET_ADDRESS' ||
-        response === 'zh' ||
-        response === 'zh-Hant' ||
-        response === 'en'
-      ) {
-        return true
-      }
-    }
-
-    return false
-  }
-
   controller = /**
    * Bull Queue controller
    * @date 11/27/2023 - 10:41:33 AM
@@ -105,22 +79,16 @@ export default class QuestionQueue {
         )
         let questionData = job.data
         let cfg = await this.messageEvents.get(job.id)
-        let { e, retries, resetExpired = true } = cfg
         let questionInstance = new Question(questionData, cfg)
         await questionInstance.init()
 
         let response = await askAndReply(questionInstance, cfg)
-        let text = response.text
-
-        if (this.responseNonsense(text, questionInstance)) {
-          throw error('nonsense Bard response')
+        if (!response || typeof response.text !== 'string') {
+          throw new Error('Invalid provider response: missing text field')
         }
 
         // Update meta info
-        await questionInstance.updateMetaInfo(
-          response.parentMessageId,
-          response.conversationId
-        )
+        await questionInstance.updateMetaInfo(response)
 
         // Return text
         console.log(`Job[${job.id}] finished. Response: ${response.text}`)
@@ -141,7 +109,6 @@ export default class QuestionQueue {
           console.debug(`Job[${job.id}] completed.`)
           let cfg = await this.messageEvents.get(job.id)
           this.messageEvents.delete(job.id)
-          const { e } = cfg
           let questionData = job.data
 
           // Postprocess: if result includes image url, render it.
@@ -160,7 +127,6 @@ export default class QuestionQueue {
         async (job, err) => {
           let idReg = /^.*job.*(\d+).*$/
           let id = idReg.exec(job)[1]
-          let e = await this.messageEvents.get(id)
           console.log(
           `Error in queue[${this.name}] when processing job[${id}]: ${job}, ${err}`
           )
@@ -182,7 +148,6 @@ export default class QuestionQueue {
           let id
           try {
             id = idReg.exec(job)[1]
-            let e = await this.messageEvents.get(id)
             console.log(
             `Error in queue[${this.name}] when processing job[${id}]: ${job}, ${err}`
             )

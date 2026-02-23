@@ -13,8 +13,6 @@ class ChatGptApi {
   constructor() {
     let params = { fetch: this.fetch }
 
-    this.gpt4 = Config.useGpt4
-
     if (Config.useUnofficial) {
       params.accessToken = Config.apiAccessToken
       params.apiReverseProxyUrl = Config.apiReverseProxyUrl
@@ -66,12 +64,14 @@ class ChatGptApi {
   async fetch(url, params = {}, retries = MAX_RETRIES) {
     const proxyServer = Config.proxy
     let options = {
-      agent: new HttpsProxyAgent(proxyServer, {
-        keepAlive: true,
-        timeout: TIMEOUT_MS
-      }),
       timeout: TIMEOUT_MS,
       ...params
+    }
+    if (proxyServer) {
+      options.agent = new HttpsProxyAgent(proxyServer, {
+        keepAlive: true,
+        timeout: TIMEOUT_MS
+      })
     }
 
     try {
@@ -83,7 +83,7 @@ class ChatGptApi {
             `Error ${status_code} occurred, retrying... (${retries} retries left)`
           )
           await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
-          return fetch(url, options, retries - 1)
+          return this.fetch(url, options, retries - 1)
         }
 
         return response
@@ -97,7 +97,7 @@ class ChatGptApi {
           `Error ${err} occurred, retrying... (${retries} retries left)`
         )
         await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
-        return fetch(url, options, retries - 1)
+        return this.fetch(url, options, retries - 1)
       } else {
         throw error(`Max retries exceeded for ChatGPT conversation. ${err}`)
       }

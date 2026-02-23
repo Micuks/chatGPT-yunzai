@@ -1,7 +1,6 @@
 const QuestionType = {
-  ChatGPT: 'ChatGPT',
-  Gpt4: 'GPT4',
-  Bard: 'Bard'
+  OpenClaw: 'OpenClaw',
+  ChatGPT: 'ChatGPT'
 }
 
 export default QuestionType
