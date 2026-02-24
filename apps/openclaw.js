@@ -26,6 +26,11 @@ export class openclaw extends plugin {
     const reply =
       `OpenClaw enabled: ${Config.useOpenClaw}\n` +
       `baseUrl: ${Config.openClawBaseUrl}\n` +
+      `transport: ${Config.openClawTransport}\n` +
+      `wsUrl: ${Config.openClawWsUrl || '(auto from baseUrl)'}\n` +
+      `wsPaths: ${Config.openClawWsPaths}\n` +
+      `wsSubmitMethods: ${Config.openClawWsSubmitMethods}\n` +
+      `wsHistoryMethods: ${Config.openClawWsHistoryMethods}\n` +
       `agentHook: ${Config.openClawAgentHookPath}\n` +
       `sessionPath: ${Config.openClawSessionPath}\n` +
       `sessionMode: ${Config.openClawSessionMode}\n` +
