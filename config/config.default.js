@@ -11,6 +11,13 @@ const OPENCLAW_WS_PATHS =
   process.env.OPENCLAW_WS_PATHS || '/'
 const OPENCLAW_WS_CONNECT_METHODS =
   process.env.OPENCLAW_WS_CONNECT_METHODS || 'connect'
+const OPENCLAW_WS_CLIENT_ID =
+  process.env.OPENCLAW_WS_CLIENT_ID || 'gateway-client'
+const OPENCLAW_WS_CLIENT_MODE =
+  process.env.OPENCLAW_WS_CLIENT_MODE || 'backend'
+const OPENCLAW_WS_ROLE = process.env.OPENCLAW_WS_ROLE || 'operator'
+const OPENCLAW_WS_SCOPES =
+  process.env.OPENCLAW_WS_SCOPES || 'operator.read,operator.write'
 const OPENCLAW_WS_SUBMIT_METHODS =
   process.env.OPENCLAW_WS_SUBMIT_METHODS || 'chat.send'
 const OPENCLAW_WS_HISTORY_METHODS =
@@ -77,6 +84,10 @@ export const Config = {
   openClawWsUrl: OPENCLAW_WS_URL,
   openClawWsPaths: OPENCLAW_WS_PATHS,
   openClawWsConnectMethods: OPENCLAW_WS_CONNECT_METHODS,
+  openClawWsClientId: OPENCLAW_WS_CLIENT_ID,
+  openClawWsClientMode: OPENCLAW_WS_CLIENT_MODE,
+  openClawWsRole: OPENCLAW_WS_ROLE,
+  openClawWsScopes: OPENCLAW_WS_SCOPES,
   openClawWsSubmitMethods: OPENCLAW_WS_SUBMIT_METHODS,
   openClawWsHistoryMethods: OPENCLAW_WS_HISTORY_METHODS,
   openClawWsHealthMethods: OPENCLAW_WS_HEALTH_METHODS,
