@@ -253,6 +253,12 @@ class OpenClawApi {
   rpcErrorToString (errLike) {
     if (!errLike) return 'Unknown RPC error'
     if (typeof errLike === 'string') return errLike
+    if (
+      typeof errLike.code === 'string' &&
+      typeof errLike.message === 'string'
+    ) {
+      return `[${errLike.code}] ${errLike.message}`
+    }
     if (typeof errLike.message === 'string') return errLike.message
     if (typeof errLike.error === 'string') return errLike.error
     if (typeof errLike.code !== 'undefined' && typeof errLike.msg === 'string') {
@@ -452,11 +458,18 @@ class OpenClawApi {
 
   async tryWsConnectHandshake (client) {
     const methods = this.parseCsv(Config.openClawWsConnectMethods, ['connect'])
+    const clientId = String(Config.openClawWsClientId || 'gateway-client').trim()
+    const clientMode = String(Config.openClawWsClientMode || 'backend').trim()
+    const role = String(Config.openClawWsRole || 'operator').trim()
+    const scopes = this.parseCsv(Config.openClawWsScopes, [
+      'operator.read',
+      'operator.write'
+    ])
     const baseClient = {
-      id: 'chatgpt-yunzai',
+      id: clientId,
       version: '2.0.2',
       platform: process.platform || 'linux',
-      mode: 'operator'
+      mode: clientMode
     }
     const token = String(Config.openClawToken || '').trim()
     const protocolCandidates = this.parseCsv(
@@ -472,8 +485,8 @@ class OpenClawApi {
         minProtocol: protocol,
         maxProtocol: protocol,
         client: baseClient,
-        role: 'operator',
-        scopes: ['operator.read', 'operator.write'],
+        role,
+        scopes,
         caps: [],
         commands: [],
         permissions: {},
@@ -491,8 +504,8 @@ class OpenClawApi {
         minProtocol: 3,
         maxProtocol: 3,
         client: baseClient,
-        role: 'operator',
-        scopes: ['operator.read', 'operator.write'],
+        role,
+        scopes,
         caps: [],
         commands: [],
         permissions: {},

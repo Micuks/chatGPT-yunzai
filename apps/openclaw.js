@@ -31,6 +31,9 @@ export class openclaw extends plugin {
       `wsPaths: ${Config.openClawWsPaths}\n` +
       `wsAuthHeader: ${Config.openClawWsUseAuthHeader}\n` +
       `protocols: ${Config.openClawProtocolVersions}\n` +
+      `wsClient: ${Config.openClawWsClientId}/${Config.openClawWsClientMode}\n` +
+      `wsRole: ${Config.openClawWsRole}\n` +
+      `wsScopes: ${Config.openClawWsScopes}\n` +
       `wsSubmitMethods: ${Config.openClawWsSubmitMethods}\n` +
       `wsHistoryMethods: ${Config.openClawWsHistoryMethods}\n` +
       `wsHealthMethods: ${Config.openClawWsHealthMethods}\n` +
