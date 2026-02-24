@@ -8,14 +8,18 @@ const OPENCLAW_BASE_URL =
 const OPENCLAW_TRANSPORT = process.env.OPENCLAW_TRANSPORT || 'auto'
 const OPENCLAW_WS_URL = process.env.OPENCLAW_WS_URL || ''
 const OPENCLAW_WS_PATHS =
-  process.env.OPENCLAW_WS_PATHS || '/,/gateway,/ws,/api/ws'
+  process.env.OPENCLAW_WS_PATHS || '/'
 const OPENCLAW_WS_CONNECT_METHODS =
   process.env.OPENCLAW_WS_CONNECT_METHODS || 'connect'
 const OPENCLAW_WS_SUBMIT_METHODS =
-  process.env.OPENCLAW_WS_SUBMIT_METHODS || 'hooks_agent,hooks.agent,chat.send'
+  process.env.OPENCLAW_WS_SUBMIT_METHODS || 'chat.send'
 const OPENCLAW_WS_HISTORY_METHODS =
-  process.env.OPENCLAW_WS_HISTORY_METHODS ||
-  'sessions_history,sessions.history,chat.history,sessions_list,sessions.list'
+  process.env.OPENCLAW_WS_HISTORY_METHODS || 'chat.history'
+const OPENCLAW_WS_HEALTH_METHODS =
+  process.env.OPENCLAW_WS_HEALTH_METHODS || 'health'
+const OPENCLAW_PROTOCOL_VERSIONS =
+  process.env.OPENCLAW_PROTOCOL_VERSIONS || '3,7'
+const OPENCLAW_WS_USE_AUTH_HEADER = process.env.OPENCLAW_WS_USE_AUTH_HEADER === 'true'
 const OPENCLAW_WS_CONNECT_TIMEOUT_MS = Number(
   process.env.OPENCLAW_WS_CONNECT_TIMEOUT_MS || 5000
 )
@@ -75,6 +79,9 @@ export const Config = {
   openClawWsConnectMethods: OPENCLAW_WS_CONNECT_METHODS,
   openClawWsSubmitMethods: OPENCLAW_WS_SUBMIT_METHODS,
   openClawWsHistoryMethods: OPENCLAW_WS_HISTORY_METHODS,
+  openClawWsHealthMethods: OPENCLAW_WS_HEALTH_METHODS,
+  openClawProtocolVersions: OPENCLAW_PROTOCOL_VERSIONS,
+  openClawWsUseAuthHeader: OPENCLAW_WS_USE_AUTH_HEADER,
   openClawWsConnectTimeoutMs: OPENCLAW_WS_CONNECT_TIMEOUT_MS,
   openClawWsRequestTimeoutMs: OPENCLAW_WS_REQUEST_TIMEOUT_MS,
   openClawToken: OPENCLAW_TOKEN,
