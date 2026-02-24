@@ -29,8 +29,11 @@ export class openclaw extends plugin {
       `transport: ${Config.openClawTransport}\n` +
       `wsUrl: ${Config.openClawWsUrl || '(auto from baseUrl)'}\n` +
       `wsPaths: ${Config.openClawWsPaths}\n` +
+      `wsAuthHeader: ${Config.openClawWsUseAuthHeader}\n` +
+      `protocols: ${Config.openClawProtocolVersions}\n` +
       `wsSubmitMethods: ${Config.openClawWsSubmitMethods}\n` +
       `wsHistoryMethods: ${Config.openClawWsHistoryMethods}\n` +
+      `wsHealthMethods: ${Config.openClawWsHealthMethods}\n` +
       `agentHook: ${Config.openClawAgentHookPath}\n` +
       `sessionPath: ${Config.openClawSessionPath}\n` +
       `sessionMode: ${Config.openClawSessionMode}\n` +

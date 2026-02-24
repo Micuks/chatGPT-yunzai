@@ -55,7 +55,7 @@ class OpenClawApi {
     if (!base) return []
 
     const baseAsWs = base.replace(/^http:/i, 'ws:').replace(/^https:/i, 'wss:')
-    const fallbackPaths = String(Config.openClawWsPaths || '/,/gateway,/ws,/api/ws')
+    const fallbackPaths = String(Config.openClawWsPaths || '/')
       .split(',')
       .map((item) => item.trim())
       .filter(Boolean)
@@ -87,6 +87,19 @@ class OpenClawApi {
       .filter(Boolean)
     if (list.length > 0) return list
     return fallback
+  }
+
+  buildIdempotencyKey (sessionKey = '') {
+    const sid = String(sessionKey || 'main').replace(/[^a-zA-Z0-9_-]/g, '_')
+    let rid = ''
+    try {
+      rid = typeof crypto?.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `${Date.now()}_${Math.random().toString(16).slice(2)}`
+    } catch (err) {
+      rid = `${Date.now()}_${Math.random().toString(16).slice(2)}`
+    }
+    return `yunzai_${sid}_${rid}`
   }
 
   buildSessionUrl (sessionKey) {
@@ -272,7 +285,8 @@ class OpenClawApi {
     }
 
     const connectTimeoutMs = Number(Config.openClawWsConnectTimeoutMs || 5000)
-    const headers = this.buildAuthHeaders()
+    const useWsAuthHeader = Boolean(Config.openClawWsUseAuthHeader)
+    const headers = useWsAuthHeader ? this.buildAuthHeaders() : {}
     let lastErr
 
     for (const url of urls) {
@@ -353,6 +367,18 @@ class OpenClawApi {
         return
       }
 
+      if (payload?.type === 'event') {
+        client.lastEvent = payload
+        if (payload?.event === 'connect.challenge') {
+          client.connectChallenge = payload?.payload || null
+        }
+        return
+      }
+
+      if (payload?.type !== 'res') {
+        return
+      }
+
       const id = payload?.id != null ? String(payload.id) : ''
       if (!id || !pending.has(id)) return
 
@@ -360,16 +386,16 @@ class OpenClawApi {
       pending.delete(id)
       clearTimeout(deferred.timer)
 
-      if (payload?.ok === false || payload?.error) {
+      if (payload?.ok === false) {
         deferred.reject(
           new Error(
-            this.rpcErrorToString(payload.error || payload?.result || payload)
+            this.rpcErrorToString(payload?.error || payload)
           )
         )
         return
       }
 
-      deferred.resolve(this.extractRpcResult(payload))
+      deferred.resolve(this.extractRpcResult(payload?.payload))
     }
 
     ws.onclose = (event) => {
@@ -395,7 +421,7 @@ class OpenClawApi {
     }
     const requestTimeoutMs = Number(timeoutMs || Config.openClawWsRequestTimeoutMs || 15000)
     const id = String(client.nextId++)
-    const payload = { id, method, params }
+    const payload = { type: 'req', id, method, params }
 
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -426,21 +452,53 @@ class OpenClawApi {
 
   async tryWsConnectHandshake (client) {
     const methods = this.parseCsv(Config.openClawWsConnectMethods, ['connect'])
-    const baseParams = {
-      client: 'chatgpt-plugin/2.x',
-      capabilities: { streaming: false }
+    const baseClient = {
+      id: 'chatgpt-yunzai',
+      version: '2.0.2',
+      platform: process.platform || 'linux',
+      mode: 'operator'
     }
     const token = String(Config.openClawToken || '').trim()
-    const authType = String(Config.openClawAuthType || 'bearer').toLowerCase()
+    const protocolCandidates = this.parseCsv(
+      Config.openClawProtocolVersions,
+      ['3', '7']
+    )
+      .map((item) => Number(item))
+      .filter((item) => Number.isFinite(item) && item > 0)
 
-    const paramsCandidates = [baseParams]
+    const paramsCandidates = []
+    for (const protocol of protocolCandidates) {
+      const base = {
+        minProtocol: protocol,
+        maxProtocol: protocol,
+        client: baseClient,
+        role: 'operator',
+        scopes: ['operator.read', 'operator.write'],
+        caps: [],
+        commands: [],
+        permissions: {},
+        locale: 'zh-CN',
+        userAgent: `chatgpt-yunzai/2.0.2 node/${process.versions?.node || 'unknown'}`
+      }
+      paramsCandidates.push(base)
+      paramsCandidates.push({
+        ...base,
+        auth: token ? { token } : undefined
+      })
+    }
     if (token) {
       paramsCandidates.unshift({
-        ...baseParams,
-        auth: {
-          type: authType,
-          token
-        }
+        minProtocol: 3,
+        maxProtocol: 3,
+        client: baseClient,
+        role: 'operator',
+        scopes: ['operator.read', 'operator.write'],
+        caps: [],
+        commands: [],
+        permissions: {},
+        auth: { token },
+        locale: 'zh-CN',
+        userAgent: `chatgpt-yunzai/2.0.2 node/${process.versions?.node || 'unknown'}`
       })
     }
 
@@ -487,15 +545,17 @@ class OpenClawApi {
 
   async fetchWsMessages (client, sessionKey) {
     const methods = this.parseCsv(Config.openClawWsHistoryMethods, [
-      'sessions_history',
-      'sessions.history',
       'chat.history',
-      'sessions_list',
-      'sessions.list'
+      'sessions_history',
+      'sessions.history'
     ])
 
     const payloadCandidates = [
+      { session: sessionKey },
+      { session: sessionKey, limit: 30 },
+      { session: sessionKey, count: 30 },
       { sessionKey },
+      { sessionKey, count: 30 },
       { key: sessionKey },
       { sessionId: sessionKey },
       { sessionKey, limit: 30 },
@@ -650,18 +710,37 @@ class OpenClawApi {
 
   async submitMessageWs (client, message, sessionKey) {
     const methods = this.parseCsv(Config.openClawWsSubmitMethods, [
+      'chat.send',
       'hooks_agent',
-      'hooks.agent',
-      'chat.send'
+      'hooks.agent'
     ])
+    const idempotencyKey = this.buildIdempotencyKey(sessionKey)
     const base = this.buildSubmitPayload(message, sessionKey)
     const payloadCandidates = [
-      base,
-      { ...base, text: message },
+      {
+        session: sessionKey,
+        text: message,
+        idempotencyKey
+      },
+      {
+        sessionKey,
+        text: message,
+        idempotencyKey
+      },
+      {
+        session: sessionKey,
+        message,
+        idempotencyKey
+      },
+      {
+        ...base,
+        text: message,
+        idempotencyKey
+      },
       { ...base, input: message },
-      { ...base, sessionId: sessionKey },
-      { sessionKey, text: message },
-      { sessionId: sessionKey, text: message }
+      { ...base, sessionId: sessionKey, idempotencyKey },
+      { sessionKey, text: message, idempotencyKey },
+      { sessionId: sessionKey, text: message, idempotencyKey }
     ]
     return this.callWsFirstSuccess(client, methods, payloadCandidates)
   }
@@ -744,9 +823,20 @@ class OpenClawApi {
   async askViaWs (questionBody, sessionKey) {
     const client = await this.connectWsClient()
     this.attachWsDispatchers(client)
-    await this.tryWsConnectHandshake(client)
+    const connected = await this.tryWsConnectHandshake(client)
+    if (!connected) {
+      throw new Error('OpenClaw WS connect failed: connect handshake rejected')
+    }
 
     try {
+      try {
+        const healthMethods = this.parseCsv(
+          Config.openClawWsHealthMethods,
+          ['health']
+        )
+        await this.callWsFirstSuccess(client, healthMethods, [{}, { detail: false }])
+      } catch (err) {}
+
       const previousReply = await this.getLatestAssistantReplyWs(client, sessionKey)
       const submitResult = await this.submitMessageWs(client, questionBody, sessionKey)
       const immediateText = this.extractResponseTextFromResult(submitResult?.result)
