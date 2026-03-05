@@ -729,7 +729,24 @@ class OpenClawApi {
     ])
     const idempotencyKey = this.buildIdempotencyKey(sessionKey)
     const base = this.buildSubmitPayload(message, sessionKey)
+    const chatSendBase = {
+      sessionKey,
+      message,
+      deliver: Boolean(Config.openClawDeliver),
+      idempotencyKey
+    }
     const payloadCandidates = [
+      chatSendBase,
+      {
+        sessionKey,
+        message,
+        idempotencyKey
+      },
+      {
+        session: sessionKey,
+        message,
+        idempotencyKey
+      },
       {
         session: sessionKey,
         text: message,
@@ -751,9 +768,10 @@ class OpenClawApi {
         idempotencyKey
       },
       { ...base, input: message },
-      { ...base, sessionId: sessionKey, idempotencyKey },
-      { sessionKey, text: message, idempotencyKey },
-      { sessionId: sessionKey, text: message, idempotencyKey }
+      {
+        ...base,
+        idempotencyKey
+      }
     ]
     return this.callWsFirstSuccess(client, methods, payloadCandidates)
   }
