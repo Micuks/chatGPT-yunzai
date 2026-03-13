@@ -1,119 +1,87 @@
-# ChatGPT-Yunzai - Yunzai-Bot(v3) ChatGPT 插件
+# chatGPT-yunzai
 
-> 基于 OpenAI API 的 [Yunzai-Bot](https://gitee.com/yoimiya-kokomi/Yunzai-Bot)(v3) ChatGPT 插件，支持 GPT-3.5、GPT-4 和 Google Bard。
+这是一个用于 Yunzai-Bot(v3) 的对话插件。
 
-## 功能
+按当前代码实现，插件实际支持的能力是：
 
-| 功能 | 指令 | 说明 |
-|------|------|------|
-| 询问 ChatGPT | `?问题` 或 `gpt 问题` | 单次提问 |
-| 连续对话 | `!问题` | 保持上下文的连续对话 |
-| GPT-4 对话 | `gpt4 问题` 或 `/gpt4 问题` | 使用 GPT-4 模型（需配置启用） |
-| Google Bard | `bard 问题` 或 `/bard 问题` | 与 Bard 对话（需配置启用） |
-| 查看帮助 | `#聊天帮助` | 显示可用命令 |
-| 结束对话 | `#结束对话` | 清除当前对话上下文 |
-| 清空队列 | `#清除队列` | 清空等待中的消息队列 |
-| 聊天统计 | `#聊天列表` | 查看当前活跃的对话（仅主人） |
+- 通过 OpenAI 官方 `ChatGPTAPI` 或非官方反向代理方式发起对话
+- 在开启 `USE_GPT4` 后，使用 `gpt4` 或 `/gpt4` 触发 GPT-4
+- 在开启 `USE_BARD` 后，使用 `bard` 或 `/bard` 触发 Google Bard
+- 按用户在 Redis 中保存会话上下文，10 分钟无活动后重置
+- 基于 Bull 的请求队列，可配置并发数
+- 任务失败后自动重试
+- 在最终回复前做一层简单的屏蔽词拦截
+- 帮助命令和清空队列命令
 
-## 特性
-
-- ✅ 支持连续对话（自动保持上下文）
-- ✅ 支持代理配置
-- ✅ 支持官方 API 和非官方反向代理两种模式
-- ✅ 支持敏感词过滤
-- ✅ 消息队列管理，避免并发问题
-- ✅ 自动重试机制（最多 5 次）
+英文说明见 [readme.md](./readme.md)。
 
 ## 安装
 
-### 1. 克隆插件
+1. 将仓库克隆到 Yunzai-Bot 的 `plugins/` 目录。
 
 ```bash
 cd Yunzai-Bot/plugins
 git clone https://github.com/Micuks/chatGPT-yunzai.git
 ```
 
-### 2. 安装依赖
+2. 复制配置模板。
 
 ```bash
-cd chatGPT-yunzai
-pnpm install
-```
-
-### 3. 配置
-
-```bash
-cd config
+cd chatGPT-yunzai/config
 cp config.default.js config.js
 ```
 
-编辑 `config.js`，填入你的配置：
-
-```javascript
-// OpenAI API Key（官方模式必须）
-const API_KEY = "sk-xxx";
-
-// 代理地址（可选）
-const PROXY = "http://127.0.0.1:7890";
-
-// 启用 GPT-4（需要 ChatGPT Plus 订阅）
-const USE_GPT4 = true;
-
-// 启用 Google Bard
-const USE_BARD = false;
-const BARD_COOKIE = "__Secure-1PSID=xxx";
-```
-
-### 4. 启动
+3. 安装依赖。
 
 ```bash
-cd Yunzai-Bot
-npm run start
+cd ../
+pnpm install
 ```
 
-## 配置说明
+4. 按你要使用的模式填写 `config/config.js`。
 
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `API_KEY` | OpenAI API 密钥 | 空 |
-| `PROXY` | 代理地址 | 空 |
-| `MODEL_NAME` | 模型名称 | `gpt-3.5-turbo-0301` |
-| `USE_GPT4` | 是否启用 GPT-4 | `false` |
-| `USE_BARD` | 是否启用 Bard | `false` |
-| `BARD_COOKIE` | Bard Cookie | 空 |
-| `USE_UNOFFICIAL` | 使用非官方模式 | `false` |
-| `API_ACCESS_TOKEN` | 非官方模式访问令牌 | 空 |
-| `CONCURRENCY_JOBS` | 并发任务数 | 1 |
+## 当前生效的配置项
 
-## 使用模式
+下面这些配置会被当前运行时代码实际读取：
 
-### 官方模式（推荐）
+| 配置项 | 当前作用 |
+| --- | --- |
+| `PROXY` | 可选代理，ChatGPT 和 Bard 客户端都会使用 |
+| `API_KEY` | OpenAI 官方模式所需 |
+| `USE_UNOFFICIAL` | 切换到 `ChatGPTUnofficialProxyAPI` |
+| `API_ACCESS_TOKEN` | 开启非官方模式后必填 |
+| `API_REVERSE_PROXY_URL` | 非官方模式可选的反向代理地址 |
+| `USE_GPT4` | 开启 `gpt4` 和 `/gpt4` 指令 |
+| `USE_BARD` | 开启 `bard` 和 `/bard` 指令 |
+| `BARD_COOKIE` | 开启 Bard 后必填 |
+| `CONCURRENCY_JOBS` | 控制 Bull 队列并发数 |
 
-使用 OpenAI 官方 API，稳定可靠：
+关于模板中遗留但当前未实际生效的配置：
 
-```javascript
-const API_KEY = "sk-your-api-key";
-const USE_UNOFFICIAL = false;
-```
+- `MODEL_NAME` 仍然存在于 `config.default.js`，但当前运行时代码不会用它决定模型。
+- `MODEL_PAID` 已导出，但当前运行时代码不会读取它。
+- 当前代码里的默认回退模型分别是 ChatGPT 的 `gpt-3.5-turbo-1106` 和 GPT-4 的 `gpt-4-0613`。
 
-### 非官方模式
+## 指令
 
-使用反向代理，免费但有速率限制：
+当前代码可确认的用户侧指令如下：
 
-```javascript
-const USE_UNOFFICIAL = true;
-const API_ACCESS_TOKEN = "your-access-token";
-```
+| 功能 | 指令 |
+| --- | --- |
+| 与 ChatGPT 对话 | `?问题`、`？问题`、`!问题`、`！问题`、`gpt 问题`、`/gpt 问题` |
+| 与 GPT-4 对话 | `gpt4 问题`、`/gpt4 问题` |
+| 与 Bard 对话 | `bard 问题`、`/bard 问题` |
+| 查看帮助 | `#聊天帮助`、`#chatgpthelp`、`#chathelp`、`#chatmenu` |
+| 清空队列 | `#清除队列`、`#清空队列` |
 
-获取 Access Token：访问 https://chat.openai.com/api/auth/session
+补充说明：
 
-## 注意事项
+- 所有聊天前缀走的是同一套按用户保存上下文的机制，`!` 并不是单独的一种“连续对话模式”。
+- 用户 10 分钟没有继续发问时，会话上下文会被重置。
+- 请求进入队列时，插件会先回复一条包含等待中和执行中任务数量的 `Thinking...` 提示。
 
-1. 官方模式需要 OpenAI API 额度
-2. 非官方模式可能不稳定，且存在安全风险
-3. Google Bard 对 Cookie 检测严格，体验可能不佳
-4. 十分钟内无交流会自动重置对话
+## 代码现状说明
 
-## 许可证
-
-MIT
+- 代码里仍然保留了 `#聊天列表` 和 `#结束` 或 `#停止` 聊天相关处理，但这些逻辑读取的是旧的 `CHATGPT:CHATS:*` 键，而当前实际会话数据保存在 `CHATGPT:META:*` 下，因此这里不把它们当作可靠的已支持功能写进文档。
+- 屏蔽词拦截使用的是 `components/utils.js` 中的占位列表，只能算当前代码自带的一层基础过滤，不应视为完整审核系统。
+- Bard 相关实现和依赖名称仍然是 Google Bard，这里按当前代码保持一致，不扩展说明到其他产品名。

@@ -1,119 +1,87 @@
-# ChatGPT-Yunzai - ChatGPT Plugin for Yunzai-Bot(v3)
+# chatGPT-yunzai
 
-> A ChatGPT plugin for [Yunzai-Bot](https://gitee.com/yoimiya-kokomi/Yunzai-Bot)(v3) using OpenAI API. Supports GPT-3.5, GPT-4, and Google Bard.
+Yunzai-Bot(v3) plugin for ChatGPT-style conversations.
 
-## Features
+The current codebase supports:
 
-| Feature | Command | Description |
-|---------|---------|-------------|
-| Ask ChatGPT | `?question` or `gpt question` | Single question |
-| Continuous chat | `!question` | Chat with context |
-| GPT-4 chat | `gpt4 question` or `/gpt4 question` | Use GPT-4 model (requires config) |
-| Google Bard | `bard question` or `/bard question` | Chat with Bard (requires config) |
-| Help | `#聊天帮助` | Show available commands |
-| End chat | `#结束对话` | Clear conversation context |
-| Clear queue | `#清除队列` | Clear waiting message queue |
-| Chat stats | `#聊天列表` | View active chats (master only) |
+- OpenAI access through the official `ChatGPTAPI` flow or the unofficial reverse-proxy flow
+- Optional GPT-4 requests through `gpt4` or `/gpt4`
+- Optional Google Bard requests through `bard` or `/bard`
+- Per-user conversation state stored in Redis and reset after 10 minutes of inactivity
+- Bull-based request queue with configurable concurrency
+- Automatic retries on failed jobs
+- Simple block-word filtering before sending the final reply
+- Queue cleanup and help commands
 
-## Highlights
+Chinese documentation: [readme-zh.md](./readme-zh.md)
 
-- ✅ Continuous conversation with context
-- ✅ Proxy support
-- ✅ Official API and unofficial reverse proxy modes
-- ✅ Sensitive word filtering
-- ✅ Message queue management
-- ✅ Auto retry (up to 5 times)
+## Install
 
-## Installation
-
-### 1. Clone the plugin
+1. Clone this repository into your Yunzai-Bot `plugins/` directory.
 
 ```bash
 cd Yunzai-Bot/plugins
 git clone https://github.com/Micuks/chatGPT-yunzai.git
 ```
 
-### 2. Install dependencies
+2. Copy the config template.
 
 ```bash
-cd chatGPT-yunzai
-pnpm install
-```
-
-### 3. Configure
-
-```bash
-cd config
+cd chatGPT-yunzai/config
 cp config.default.js config.js
 ```
 
-Edit `config.js`:
-
-```javascript
-// OpenAI API Key (required for official mode)
-const API_KEY = "sk-xxx";
-
-// Proxy (optional)
-const PROXY = "http://127.0.0.1:7890";
-
-// Enable GPT-4 (requires ChatGPT Plus subscription)
-const USE_GPT4 = true;
-
-// Enable Google Bard
-const USE_BARD = false;
-const BARD_COOKIE = "__Secure-1PSID=xxx";
-```
-
-### 4. Start
+3. Install dependencies.
 
 ```bash
-cd Yunzai-Bot
-npm run start
+cd ../
+pnpm install
 ```
+
+4. Fill `config/config.js` according to the mode you want to use.
 
 ## Configuration
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `API_KEY` | OpenAI API key | empty |
-| `PROXY` | Proxy URL | empty |
-| `MODEL_NAME` | Model name | `gpt-3.5-turbo-0301` |
-| `USE_GPT4` | Enable GPT-4 | `false` |
-| `USE_BARD` | Enable Bard | `false` |
-| `BARD_COOKIE` | Bard Cookie | empty |
-| `USE_UNOFFICIAL` | Use unofficial mode | `false` |
-| `API_ACCESS_TOKEN` | Access token for unofficial mode | empty |
-| `CONCURRENCY_JOBS` | Concurrent jobs | 1 |
+The following options are used by the current runtime:
 
-## Modes
+| Key | Current behavior |
+| --- | --- |
+| `PROXY` | Optional HTTP(S) proxy used by both ChatGPT and Bard clients |
+| `API_KEY` | Required for the official OpenAI mode |
+| `USE_UNOFFICIAL` | Switches ChatGPT calls to `ChatGPTUnofficialProxyAPI` |
+| `API_ACCESS_TOKEN` | Required when `USE_UNOFFICIAL=true` |
+| `API_REVERSE_PROXY_URL` | Optional reverse-proxy endpoint for unofficial mode |
+| `USE_GPT4` | Enables the `gpt4` and `/gpt4` commands |
+| `USE_BARD` | Enables the `bard` and `/bard` commands |
+| `BARD_COOKIE` | Required when `USE_BARD=true` |
+| `CONCURRENCY_JOBS` | Controls Bull queue concurrency |
 
-### Official Mode (Recommended)
+Notes about legacy config entries in the template:
 
-Use OpenAI official API, stable and reliable:
+- `MODEL_NAME` is still present in `config.default.js`, but the current runtime does not use it for model selection.
+- `MODEL_PAID` is exported, but the current runtime does not read it.
+- Current built-in fallback models are `gpt-3.5-turbo-1106` for ChatGPT and `gpt-4-0613` for GPT-4.
 
-```javascript
-const API_KEY = "sk-your-api-key";
-const USE_UNOFFICIAL = false;
-```
+## Commands
 
-### Unofficial Mode
+The current code recognizes these user-facing commands:
 
-Use reverse proxy, free but rate-limited:
+| Feature | Command |
+| --- | --- |
+| Chat with ChatGPT | `?question`, `？question`, `!question`, `！question`, `gpt question`, `/gpt question` |
+| Chat with GPT-4 | `gpt4 question`, `/gpt4 question` |
+| Chat with Bard | `bard question`, `/bard question` |
+| Help | `#聊天帮助`, `#chatgpthelp`, `#chathelp`, `#chatmenu` |
+| Clear queue | `#清除队列`, `#清空队列` |
 
-```javascript
-const USE_UNOFFICIAL = true;
-const API_ACCESS_TOKEN = "your-access-token";
-```
+Behavior notes:
 
-Get Access Token: Visit https://chat.openai.com/api/auth/session
+- All chat prefixes use the same per-user session mechanism. `!` is not a separate "continuous chat" mode.
+- Chat sessions are refreshed after 10 minutes of inactivity.
+- When a request is queued, the plugin sends a short `Thinking...` message with waiting and active job counts.
 
-## Notes
+## Known Limits From Current Code
 
-1. Official mode requires OpenAI API credits
-2. Unofficial mode may be unstable and has security risks
-3. Google Bard has strict cookie detection, experience may vary
-4. Conversations auto-reset after 10 minutes of inactivity
-
-## License
-
-MIT
+- `#聊天列表` and `#结束` or `#停止` chat handlers still exist in the code, but they read legacy `CHATGPT:CHATS:*` keys while active conversation state is stored under `CHATGPT:META:*`. They are not documented here as reliable supported features.
+- The block-word filter uses the placeholder list in `components/utils.js`. You should treat it as a basic built-in safeguard, not a complete moderation system.
+- Bard support is still implemented as Google Bard, matching the current code and dependency names.
