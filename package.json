@@ -1,7 +1,7 @@
 {
-  "name": "chatgpt-plugin",
-  "version": "2.0.2",
-  "description": "Plugin for Yunzai-bot",
+  "name": "chatgpt-yunzai",
+  "version": "2.0.3",
+  "description": "ChatGPT/GPT-4/Google Bard plugin for Yunzai-Bot(v3) - 支持连续对话、消息队列、敏感词过滤",
   "type": "module",
   "author": "Louis Wu",
   "license": "MIT",
