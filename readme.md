@@ -1,89 +1,68 @@
-# chatGPT-yunzai
+# chatGPT-yunzai (OpenClaw Edition)
 
-Connector plugin for OpenClaw for QQ on top of Yunzai-Bot(v3).
+A Yunzai-Bot chat plugin that now uses **OpenClaw Gateway** as the default provider, with session memory, queue-based processing, and optional legacy ChatGPT fallback.
 
-In its current role, this repository is used as the Yunzai-side connector for OpenClaw for QQ: it accepts QQ chat commands, keeps per-user conversation state, queues requests, and forwards them to the configured LLM backend.
+## Features
 
-The current codebase supports:
+- OpenClaw-first architecture (WebSocket preferred)
+- Unified `Response` return shape
+- Per-user isolated sessions: `yunzai:qq:<user_id>`
+- Optional legacy ChatGPT fallback (disabled by default)
 
-- OpenAI access through the official `ChatGPTAPI` flow or the unofficial reverse-proxy flow
-- Optional GPT-4 requests through `gpt4` or `/gpt4`
-- Optional Google Bard requests through `bard` or `/bard`
-- Per-user conversation state stored in Redis and reset after 10 minutes of inactivity
-- Bull-based request queue with configurable concurrency
-- Automatic retries on failed jobs
-- Simple block-word filtering before sending the final reply
-- Queue cleanup and help commands
-
-Chinese documentation: [readme-zh.md](./readme-zh.md)
-
-## Install
-
-1. Clone this repository into your Yunzai-Bot `plugins/` directory as the OpenClaw for QQ connector.
+## Installation
 
 ```bash
 cd Yunzai-Bot/plugins
 git clone https://github.com/Micuks/chatGPT-yunzai.git
+cd chatGPT-yunzai
+pnpm i
 ```
-
-2. Copy the config template.
-
-```bash
-cd chatGPT-yunzai/config
-cp config.default.js config.js
-```
-
-3. Install dependencies.
-
-```bash
-cd ../
-pnpm install
-```
-
-4. Fill `config/config.js` according to the backend mode you want OpenClaw for QQ to use through this connector.
-
-## Configuration
-
-The following options are used by the current runtime:
-
-| Key | Current behavior |
-| --- | --- |
-| `PROXY` | Optional HTTP(S) proxy used by both ChatGPT and Bard clients |
-| `API_KEY` | Required for the official OpenAI mode |
-| `USE_UNOFFICIAL` | Switches ChatGPT calls to `ChatGPTUnofficialProxyAPI` |
-| `API_ACCESS_TOKEN` | Required when `USE_UNOFFICIAL=true` |
-| `API_REVERSE_PROXY_URL` | Optional reverse-proxy endpoint for unofficial mode |
-| `USE_GPT4` | Enables the `gpt4` and `/gpt4` commands |
-| `USE_BARD` | Enables the `bard` and `/bard` commands |
-| `BARD_COOKIE` | Required when `USE_BARD=true` |
-| `CONCURRENCY_JOBS` | Controls Bull queue concurrency |
-
-Notes about legacy config entries in the template:
-
-- `MODEL_NAME` is still present in `config.default.js`, but the current runtime does not use it for model selection.
-- `MODEL_PAID` is exported, but the current runtime does not read it.
-- Current built-in fallback models are `gpt-3.5-turbo-1106` for ChatGPT and `gpt-4-0613` for GPT-4.
 
 ## Commands
 
-The current code recognizes these QQ-side user-facing commands:
+- `?question` / `？question` / `!question` / `！question` / `claw question` / `/claw question`: OpenClaw
+- `gpt question` / `/gpt question`: legacy ChatGPT (must be enabled explicitly)
+- `#openclaw状态`: show OpenClaw runtime config
+- `#重置openclaw会话` / `#清除claw会话`: reset current user's session
 
-| Feature | Command |
-| --- | --- |
-| Chat with ChatGPT | `?question`, `？question`, `!question`, `！question`, `gpt question`, `/gpt question` |
-| Chat with GPT-4 | `gpt4 question`, `/gpt4 question` |
-| Chat with Bard | `bard question`, `/bard question` |
-| Help | `#聊天帮助`, `#chatgpthelp`, `#chathelp`, `#chatmenu` |
-| Clear queue | `#清除队列`, `#清空队列` |
+## Configuration
 
-Behavior notes:
+Copy `.env.example` and set environment variables.
 
-- All chat prefixes go through the same connector pipeline and share the same per-user session mechanism. `!` is not a separate "continuous chat" mode.
-- Chat sessions are refreshed after 10 minutes of inactivity.
-- When a request is queued, the connector sends a short `Thinking...` message with waiting and active job counts.
+Minimal OpenClaw setup:
 
-## Known Limits From Current Code
+```bash
+OPENCLAW_ENABLED=true
+OPENCLAW_BASE_URL=http://127.0.0.1:18789
+OPENCLAW_TRANSPORT=ws
+OPENCLAW_WS_URL=ws://127.0.0.1:18789
+OPENCLAW_TOKEN=your_token
+```
 
-- `#聊天列表` and `#结束` or `#停止` chat handlers still exist in the code, but they read legacy `CHATGPT:CHATS:*` keys while active conversation state is stored under `CHATGPT:META:*`. They are not documented here as reliable supported features.
-- The block-word filter uses the placeholder list in `components/utils.js`. You should treat it as a basic built-in safeguard, not a complete moderation system.
-- Bard support is still implemented as Google Bard, matching the current code and dependency names.
+Common gateway settings:
+
+```bash
+OPENCLAW_WS_CONNECT_METHODS=connect
+OPENCLAW_WS_CLIENT_ID=gateway-client
+OPENCLAW_WS_CLIENT_MODE=backend
+OPENCLAW_WS_ROLE=operator
+OPENCLAW_WS_SCOPES=operator.read,operator.write
+OPENCLAW_WS_SUBMIT_METHODS=chat.send
+OPENCLAW_WS_HISTORY_METHODS=chat.history
+OPENCLAW_WS_HEALTH_METHODS=health
+```
+
+## Security Notes
+
+- Never commit `OPENCLAW_TOKEN`, API keys, or cookies.
+- Keep secrets in environment variables or private `.env`.
+- Run a quick scan before pushing:
+
+```bash
+rg -n "OPENCLAW_TOKEN|API_KEY|password|PRIVATE KEY|Bearer\\s+" -S .
+```
+
+## Compatibility Notes
+
+- Legacy GPT-4/Bard command paths are removed.
+- REST polling remains as fallback, but Gateway WebSocket is recommended.
