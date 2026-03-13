@@ -1,7 +1,7 @@
 {
   "name": "chatgpt-yunzai",
   "version": "2.0.3",
-  "description": "Yunzai-Bot(v3) plugin for queued ChatGPT, GPT-4, and Google Bard conversations",
+  "description": "OpenClaw for QQ connector plugin for queued ChatGPT, GPT-4, and Google Bard access on Yunzai-Bot(v3)",
   "type": "module",
   "author": "Louis Wu",
   "license": "MIT",

@@ -1,6 +1,8 @@
 # chatGPT-yunzai
 
-Yunzai-Bot(v3) plugin for ChatGPT-style conversations.
+Connector plugin for OpenClaw for QQ on top of Yunzai-Bot(v3).
+
+In its current role, this repository is used as the Yunzai-side connector for OpenClaw for QQ: it accepts QQ chat commands, keeps per-user conversation state, queues requests, and forwards them to the configured LLM backend.
 
 The current codebase supports:
 
@@ -17,7 +19,7 @@ Chinese documentation: [readme-zh.md](./readme-zh.md)
 
 ## Install
 
-1. Clone this repository into your Yunzai-Bot `plugins/` directory.
+1. Clone this repository into your Yunzai-Bot `plugins/` directory as the OpenClaw for QQ connector.
 
 ```bash
 cd Yunzai-Bot/plugins
@@ -38,7 +40,7 @@ cd ../
 pnpm install
 ```
 
-4. Fill `config/config.js` according to the mode you want to use.
+4. Fill `config/config.js` according to the backend mode you want OpenClaw for QQ to use through this connector.
 
 ## Configuration
 
@@ -64,7 +66,7 @@ Notes about legacy config entries in the template:
 
 ## Commands
 
-The current code recognizes these user-facing commands:
+The current code recognizes these QQ-side user-facing commands:
 
 | Feature | Command |
 | --- | --- |
@@ -76,9 +78,9 @@ The current code recognizes these user-facing commands:
 
 Behavior notes:
 
-- All chat prefixes use the same per-user session mechanism. `!` is not a separate "continuous chat" mode.
+- All chat prefixes go through the same connector pipeline and share the same per-user session mechanism. `!` is not a separate "continuous chat" mode.
 - Chat sessions are refreshed after 10 minutes of inactivity.
-- When a request is queued, the plugin sends a short `Thinking...` message with waiting and active job counts.
+- When a request is queued, the connector sends a short `Thinking...` message with waiting and active job counts.
 
 ## Known Limits From Current Code
 
