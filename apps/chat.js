@@ -86,6 +86,10 @@ export class chatgpt extends plugin {
         await this.reply('Chat destroyed.', true)
       }
     } else {
+      if (!e.isMaster) {
+        await this.reply('Only the bot master can end other users\' chats. 只有主人可以结束别人的会话。', true)
+        return
+      }
       let at = atMessages[0]
       let qq = at.qq
       let atUser = _.trimStart(at.text, '@')
