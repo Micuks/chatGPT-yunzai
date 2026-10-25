@@ -95,7 +95,7 @@ OPENCLAW_TOKEN=your_gateway_token
 | `#openclaw状态`、`#openclawstatus` | 查看当前 OpenClaw 配置（仅主人，不显示 token） |
 | `#聊天帮助`、`#chathelp`、`#chatgpthelp`、`#chatmenu` | 帮助 |
 | `#聊天列表` | 列出有会话记录的用户（仅主人） |
-| `#结束聊天`、`#停止对话`（可 @ 某人） | 删除会话记录 |
+| `#结束聊天`、`#停止对话`（@ 别人仅限主人） | 删除会话记录 |
 | `#清除队列`、`#清空队列` | 清理执行中和等待中的队列任务 |
 
 问题内容为空时（比如只发一个 `?`），会发送占位提示 `This is a blank prompt.`。
@@ -112,6 +112,7 @@ OPENCLAW_TOKEN=your_gateway_token
 
 - 不要提交 `config/config.js`、`.env`、`OPENCLAW_TOKEN`、API key 或 access token。`config/config.js` 和 `.env` 已在 `.gitignore` 中。
 - `#openclaw状态` 仅主人可用，且不会输出 token。
+- Gateway 不在本机时请使用 `https://` / `wss://`。走 `http://` 或 `ws://` 时 token 会以明文发送，插件启动时会打印警告。
 - 推送前可以快速检查一遍：
 
 ```bash

@@ -2,15 +2,6 @@ import fetch from 'node-fetch'
 import { Config } from '../../config/config.js'
 import Response from '../question/Response.js'
 
-const COMPLETED_STATUS = new Set(['done', 'completed', 'success', 'finished'])
-const PROCESSING_STATUS = new Set([
-  'queued',
-  'pending',
-  'running',
-  'processing',
-  'started',
-  'tooluse'
-])
 const ERROR_STATUS = new Set(['error', 'failed', 'fail'])
 
 const delay = async (ms) =>
@@ -34,9 +25,37 @@ const isAmbiguousWsError = (err) => {
   return message.includes('RPC timeout') || message.includes('closed while waiting')
 }
 
+const isConnectError = (err) => {
+  const code = String(err?.code || err?.errno || '').toUpperCase()
+  const message = String(err?.message || '').toUpperCase()
+  return ['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'EHOSTUNREACH', 'ENETUNREACH']
+    .some((item) => code === item || message.includes(item))
+}
+
+const isLoopbackHost = (hostname = '') =>
+  ['localhost', '127.0.0.1', '::1', '[::1]'].includes(hostname.toLowerCase())
+
 class OpenClawApi {
   constructor () {
     this.baseUrl = (Config.openClawBaseUrl || '').replace(/\/$/, '')
+    this.warnIfPlaintextToken()
+  }
+
+  warnIfPlaintextToken () {
+    if (!Config.openClawToken) return
+    for (const raw of [this.baseUrl, Config.openClawWsUrl]) {
+      let url
+      try {
+        url = new URL(String(raw || ''))
+      } catch (err) {
+        continue
+      }
+      if (['http:', 'ws:'].includes(url.protocol) && !isLoopbackHost(url.hostname)) {
+        console.warn(
+          `[OpenClaw] Token will be sent unencrypted to ${url.host}. Use https:// / wss:// for remote gateways.`
+        )
+      }
+    }
   }
 
   buildAuthHeaders () {
@@ -650,6 +669,11 @@ class OpenClawApi {
         const responseText = await res.text()
         throw new Error(`OpenClaw submit failed with status ${res.status}: ${responseText}`)
       } catch (err) {
+        // Without an HTTP status we cannot tell whether the gateway accepted the POST.
+        if (!String(err?.message || '').includes('submit failed with status') &&
+          !isConnectError(err)) {
+          throw markSubmitted(err)
+        }
         lastErr = err
         if (attempt < retries) {
           await delay(retryDelayMs)
@@ -709,23 +733,6 @@ class OpenClawApi {
 
       if (stopReason === 'error' || (status && ERROR_STATUS.has(status))) {
         throw new Error(`OpenClaw assistant returned error state for ${sessionKey}`)
-      }
-
-      if (
-        latestCompleted &&
-        (COMPLETED_STATUS.has(status) || stopReason === 'stop')
-      ) {
-        return latestCompleted.text
-      }
-
-      if (
-        status &&
-        !PROCESSING_STATUS.has(status) &&
-        !COMPLETED_STATUS.has(status) &&
-        !ERROR_STATUS.has(status) &&
-        latestCompleted
-      ) {
-        return latestCompleted.text
       }
 
       await delay(pollIntervalMs)
@@ -889,13 +896,13 @@ class OpenClawApi {
 
   async askViaWs (questionBody, sessionKey) {
     const client = await this.connectWsClient()
-    this.attachWsDispatchers(client)
-    const connected = await this.tryWsConnectHandshake(client)
-    if (!connected) {
-      throw new Error('OpenClaw WS connect failed: connect handshake rejected')
-    }
-
     try {
+      this.attachWsDispatchers(client)
+      const connected = await this.tryWsConnectHandshake(client)
+      if (!connected) {
+        throw new Error('OpenClaw WS connect failed: connect handshake rejected')
+      }
+
       try {
         const healthMethods = this.parseCsv(
           Config.openClawWsHealthMethods,
