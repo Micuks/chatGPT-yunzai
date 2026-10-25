@@ -130,7 +130,15 @@ export default class Question {
         break
     }
     if (!thisInfo) {
-      return
+      // Metadata written by older versions may lack the per-provider block.
+      const fresh = this.newMetaInfo()
+      if (this.questionType === QuestionType.OpenClaw) {
+        thisInfo = metaInfo.openClawInfo = fresh.openClawInfo
+      } else if (this.questionType === QuestionType.ChatGPT) {
+        thisInfo = metaInfo.chatGptInfo = fresh.chatGptInfo
+      } else {
+        return
+      }
     }
     thisInfo.count = thisInfo.count + 1
     if (this.questionType === QuestionType.ChatGPT) {
