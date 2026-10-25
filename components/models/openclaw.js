@@ -16,6 +16,24 @@ const ERROR_STATUS = new Set(['error', 'failed', 'fail'])
 const delay = async (ms) =>
   new Promise((resolve) => setTimeout(resolve, Number(ms) || 0))
 
+// Bull rebuilds job errors from the message string, so the marker lives in the message.
+export const OPENCLAW_SUBMITTED_MARK = '[openclaw:submitted]'
+
+export const isSubmittedError = (err) =>
+  String(err?.message || err || '').includes(OPENCLAW_SUBMITTED_MARK)
+
+const markSubmitted = (err) => {
+  if (isSubmittedError(err)) return err
+  const wrapped = new Error(`${OPENCLAW_SUBMITTED_MARK} ${err?.message || err}`)
+  wrapped.cause = err
+  return wrapped
+}
+
+const isAmbiguousWsError = (err) => {
+  const message = String(err?.message || err || '')
+  return message.includes('RPC timeout') || message.includes('closed while waiting')
+}
+
 class OpenClawApi {
   constructor () {
     this.baseUrl = (Config.openClawBaseUrl || '').replace(/\/$/, '')
@@ -145,21 +163,18 @@ class OpenClawApi {
   }
 
   pickSessionFromList (sessions = [], sessionKey = '') {
-    if (!Array.isArray(sessions) || sessions.length === 0) {
+    if (!Array.isArray(sessions) || sessions.length === 0 || !sessionKey) {
       return null
     }
 
     const exact = sessions.find((item) => item?.key === sessionKey)
     if (exact) return exact
 
-    const fuzzy = sessions.find((item) =>
-      String(item?.key || '').includes(sessionKey)
+    // Gateway may scope keys with a prefix, e.g. `agent:main:<sessionKey>`.
+    const scoped = sessions.find((item) =>
+      String(item?.key || '').endsWith(`:${sessionKey}`)
     )
-    if (fuzzy) return fuzzy
-
-    return sessions
-      .slice()
-      .sort((a, b) => Number(b?.updatedAt || 0) - Number(a?.updatedAt || 0))[0]
+    return scoped || null
   }
 
   getMessagesFromPayload (payload, sessionKey = '') {
@@ -773,7 +788,20 @@ class OpenClawApi {
         idempotencyKey
       }
     ]
-    return this.callWsFirstSuccess(client, methods, payloadCandidates)
+    let lastErr
+    for (const method of methods) {
+      for (const params of payloadCandidates) {
+        try {
+          const result = await this.callWsRpc(client, method, params)
+          return { method, result, params }
+        } catch (err) {
+          // The gateway may have accepted the message; trying another payload could run it twice.
+          if (isAmbiguousWsError(err)) throw markSubmitted(err)
+          lastErr = err
+        }
+      }
+    }
+    throw lastErr || new Error('OpenClaw WS submit failed')
   }
 
   async getLatestAssistantReplyWs (client, sessionKey) {
@@ -792,24 +820,28 @@ class OpenClawApi {
     let lastErr
 
     while (Date.now() - start <= pollTimeoutMs) {
+      let messages
       try {
-        const messages = await this.fetchWsMessages(client, sessionKey)
-        const latestCompleted = this.findLatestAssistantMessage(messages, {
-          completedOnly: true
-        })
-        if (this.hasNewAssistantReply(latestCompleted, previousReply)) {
-          return latestCompleted.text
-        }
-
-        const latestAssistant = this.findLatestAssistantMessage(messages, {
-          completedOnly: false
-        })
-        const stopReason = this.normalizeStopReason(latestAssistant?.stopReason)
-        if (stopReason === 'error') {
-          throw new Error(`OpenClaw assistant returned error state for ${sessionKey}`)
-        }
+        messages = await this.fetchWsMessages(client, sessionKey)
       } catch (err) {
         lastErr = err
+        await delay(pollIntervalMs)
+        continue
+      }
+
+      const latestCompleted = this.findLatestAssistantMessage(messages, {
+        completedOnly: true
+      })
+      if (this.hasNewAssistantReply(latestCompleted, previousReply)) {
+        return latestCompleted.text
+      }
+
+      const latestAssistant = this.findLatestAssistantMessage(messages, {
+        completedOnly: false
+      })
+      const stopReason = this.normalizeStopReason(latestAssistant?.stopReason)
+      if (stopReason === 'error') {
+        throw new Error(`OpenClaw assistant returned error state for ${sessionKey}`)
       }
 
       await delay(pollIntervalMs)
@@ -847,8 +879,12 @@ class OpenClawApi {
       )
     }
 
-    const text = await this.pollAssistantReply(sessionKey, previousReply)
-    return new Response(text, undefined, sessionKey, { sessionKey, transport: 'rest' })
+    try {
+      const text = await this.pollAssistantReply(sessionKey, previousReply)
+      return new Response(text, undefined, sessionKey, { sessionKey, transport: 'rest' })
+    } catch (err) {
+      throw markSubmitted(err)
+    }
   }
 
   async askViaWs (questionBody, sessionKey) {
@@ -887,11 +923,15 @@ class OpenClawApi {
         )
       }
 
-      const text = await this.pollAssistantReplyWs(client, sessionKey, previousReply)
-      return new Response(text, undefined, sessionKey, {
-        sessionKey,
-        transport: 'ws'
-      })
+      try {
+        const text = await this.pollAssistantReplyWs(client, sessionKey, previousReply)
+        return new Response(text, undefined, sessionKey, {
+          sessionKey,
+          transport: 'ws'
+        })
+      } catch (err) {
+        throw markSubmitted(err)
+      }
     } finally {
       this.closeWsClient(client)
     }
@@ -922,7 +962,7 @@ class OpenClawApi {
     try {
       return await this.askViaRest(questionBody, sessionKey)
     } catch (err) {
-      if (!this.isRestUnavailableError(err)) {
+      if (isSubmittedError(err) || !this.isRestUnavailableError(err)) {
         throw err
       }
     }

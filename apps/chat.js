@@ -2,6 +2,7 @@ import _ from 'lodash'
 import plugin from '../../../lib/plugins/plugin.js'
 import QuestionData from '../components/question/QuestionData.js'
 import QuestionQueue from '../components/queue.js'
+import { isSubmittedError } from '../components/models/openclaw.js'
 
 const MAX_RETRIES = 5
 
@@ -131,7 +132,15 @@ export class chatgpt extends plugin {
         this.callback(e, res)
       })
       .catch((err) => {
-        if (ttl > 0) {
+        if (isSubmittedError(err)) {
+          console.log(
+            `Job ${job.id} issued by ${e.sender.nickname}[${e.sender.user_id}] failed after the message reached OpenClaw. Not retrying.`
+          )
+          console.debug(err)
+          e.reply(
+            `${e.sender.nickname}, OpenClaw 已收到你的消息，但没能按时拿到回复，可能仍在处理。请稍后再问，不用重复发送。`
+          )
+        } else if (ttl > 0) {
           console.log(
             `Error occurred in job ${job.id} issued by ${e.sender.nickname}[${e.sender.user_id}]. Retrying...(${ttl} times left)`
           )

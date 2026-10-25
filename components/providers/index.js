@@ -1,4 +1,5 @@
 import { Config } from '../../config/config.js'
+import Data from '../data.js'
 import ChatGptApi from '../models/chatgpt.js'
 import OpenClawApi from '../models/openclaw.js'
 import QuestionType from '../question/QuestionType.js'
@@ -11,9 +12,9 @@ const buildOpenClawProvider = () => ({
   type: QuestionType.OpenClaw,
   ask: async (questionInstance) => {
     const questionBody = questionInstance.questionBody
-    const metaInfo = questionInstance.metaInfo?.openClawInfo || {}
-    const sessionKey =
-      metaInfo.sessionKey || `yunzai:qq:${questionInstance.sender.user_id}`
+    const sessionKey = await Data.getOpenClawSessionKey(
+      questionInstance.sender.user_id
+    )
 
     return openClawApi.ask(questionBody, { sessionKey })
   }

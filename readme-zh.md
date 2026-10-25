@@ -91,7 +91,7 @@ OPENCLAW_TOKEN=your_gateway_token
 | --- | --- |
 | `?问题`、`？问题`、`!问题`、`！问题`、`claw 问题`、`/claw 问题` | 向 OpenClaw 提问 |
 | `gpt 问题`、`/gpt 问题` | 向旧版 ChatGPT 提问（未设置 `LEGACY_CHATGPT_ENABLED=true` 时只会回复“已关闭”） |
-| `#重置openclaw会话`、`#清除claw会话`（也可用 `…session`） | 重置自己的本地会话记录 |
+| `#重置openclaw会话`、`#清除claw会话`（也可用 `…session`） | 为自己开启一个新的 OpenClaw 会话 |
 | `#openclaw状态`、`#openclawstatus` | 查看当前 OpenClaw 配置（仅主人，不显示 token） |
 | `#聊天帮助`、`#chathelp`、`#chatgpthelp`、`#chatmenu` | 帮助 |
 | `#聊天列表` | 列出有会话记录的用户（仅主人） |
@@ -103,7 +103,10 @@ OPENCLAW_TOKEN=your_gateway_token
 ## 会话与状态
 
 - 本地元数据存放在 Redis 的 `CHATGPT:META:<user_id>` 下，包括创建/更新时间、请求次数、OpenClaw 会话 key 和旧版 ChatGPT 的会话 ID。
-- 10 分钟无交互，或执行 `#重置openclaw会话` 后，本地元数据会被重建。但 **OpenClaw 会话 key 始终是 `yunzai:qq:<user_id>`**，Gateway 那边保存的对话历史不会被清除。需要干净的上下文时，请在 OpenClaw 侧重置该会话。
+- 当前使用的 OpenClaw 会话 key 单独存放在 `CHATGPT:OPENCLAW_SESSION:<user_id>`，初始值为 `yunzai:qq:<user_id>`。
+- 执行 `#重置openclaw会话` 后会换成新 key `yunzai:qq:<user_id>:<时间戳>`，下一次提问从空的 Gateway 上下文开始。旧的历史仍然留在 Gateway 上。
+- 10 分钟无交互只会重建本地元数据（计数、时间戳），OpenClaw 会话 key 及其 Gateway 历史都会保留。`#结束聊天` 同样只删除本地元数据。
+- 如果 OpenClaw 已经收到消息却没有返回回复（轮询超时、Gateway 报错、WS 请求超时），这个任务不会重试，避免 agent 把同一条消息执行两遍，同时会提示用户稍后再问。
 
 ## 安全
 
