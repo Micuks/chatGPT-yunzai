@@ -91,7 +91,7 @@ REST-only variables are `OPENCLAW_AGENT_HOOK_PATH`, `OPENCLAW_SESSION_PATH`, `OP
 | --- | --- |
 | `?question`, `？question`, `!question`, `！question`, `claw question`, `/claw question` | Ask OpenClaw |
 | `gpt question`, `/gpt question` | Ask legacy ChatGPT (replies with a "disabled" notice unless `LEGACY_CHATGPT_ENABLED=true`) |
-| `#重置openclaw会话`, `#清除claw会话` (also `…session`) | Reset the caller's local session record |
+| `#重置openclaw会话`, `#清除claw会话` (also `…session`) | Start a fresh OpenClaw session for the caller |
 | `#openclaw状态`, `#openclawstatus` | Show the current OpenClaw config (master only, token not shown) |
 | `#聊天帮助`, `#chathelp`, `#chatgpthelp`, `#chatmenu` | Help |
 | `#聊天列表` | List users with session records (master only) |
@@ -103,7 +103,10 @@ A message with an empty question body (for example a bare `?`) is sent as the pl
 ## Sessions and state
 
 - Local metadata lives in Redis under `CHATGPT:META:<user_id>`: creation/update time, request counts, the OpenClaw session key, and the legacy ChatGPT conversation IDs.
-- After 10 minutes of inactivity, or after `#重置openclaw会话`, the local metadata is recreated. **The OpenClaw session key stays `yunzai:qq:<user_id>`**, so the conversation history kept by the Gateway is not cleared. Reset it on the OpenClaw side if you need a clean context.
+- The OpenClaw session key in use is stored separately under `CHATGPT:OPENCLAW_SESSION:<user_id>`. It starts as `yunzai:qq:<user_id>`.
+- `#重置openclaw会话` switches the caller to a new key, `yunzai:qq:<user_id>:<timestamp>`, so the next question starts with an empty Gateway context. The old history stays on the Gateway.
+- After 10 minutes of inactivity, only the local metadata (counters, timestamps) is recreated. The OpenClaw session key and its Gateway history are kept. `#结束聊天` likewise only deletes the local metadata.
+- If OpenClaw has already received a message but no reply arrives (poll timeout, Gateway error, WS request timeout), the job is not retried, so the agent does not run the same message twice. The user is told to ask again later.
 
 ## Security
 

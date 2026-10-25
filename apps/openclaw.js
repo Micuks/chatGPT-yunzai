@@ -1,5 +1,6 @@
 import plugin from '../../../lib/plugins/plugin.js'
 import { Config } from '../config/config.js'
+import Data from '../components/data.js'
 
 export class openclaw extends plugin {
   constructor () {
@@ -48,10 +49,11 @@ export class openclaw extends plugin {
 
   async resetSession (e) {
     const key = `CHATGPT:META:${e.sender.user_id}`
-    const sessionKey = `yunzai:qq:${e.sender.user_id}`
+    const sessionKey = await Data.rotateOpenClawSessionKey(e.sender.user_id)
+    const doneMsg = 'OpenClaw 会话已重置，下次提问将使用新的上下文。'
     const metaRaw = await redis.get(key)
     if (!metaRaw) {
-      await e.reply('当前没有会话记录。', true)
+      await e.reply(doneMsg, true)
       return
     }
 
@@ -60,7 +62,7 @@ export class openclaw extends plugin {
       meta = JSON.parse(metaRaw)
     } catch (err) {
       await redis.del(key)
-      await e.reply('会话记录已损坏，已清空。', true)
+      await e.reply(doneMsg, true)
       return
     }
 
@@ -72,6 +74,6 @@ export class openclaw extends plugin {
       meta.openClawInfo.sessionKey = sessionKey
     }
     await redis.set(key, JSON.stringify(meta))
-    await e.reply('OpenClaw 会话已重置。', true)
+    await e.reply(doneMsg, true)
   }
 }

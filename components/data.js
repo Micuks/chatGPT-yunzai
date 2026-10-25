@@ -14,6 +14,17 @@ const Data = {
 
   setMetaInfo: async (user_id, chat) => {
     await redis.set(`CHATGPT:META:${user_id}`, JSON.stringify(chat))
+  },
+
+  getOpenClawSessionKey: async (user_id) => {
+    const key = await redis.get(`CHATGPT:OPENCLAW_SESSION:${user_id}`)
+    return key || `yunzai:qq:${user_id}`
+  },
+
+  rotateOpenClawSessionKey: async (user_id) => {
+    const key = `yunzai:qq:${user_id}:${Date.now().toString(36)}`
+    await redis.set(`CHATGPT:OPENCLAW_SESSION:${user_id}`, key)
+    return key
   }
 }
 
