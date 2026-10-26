@@ -86,12 +86,12 @@ export class chatgpt extends plugin {
         await this.reply('Chat destroyed.', true)
       }
     } else {
-      if (!e.isMaster) {
+      let at = atMessages[0]
+      let qq = at.qq
+      if (!e.isMaster && String(qq) !== String(e.sender.user_id)) {
         await this.reply('Only the bot master can end other users\' chats. 只有主人可以结束别人的会话。', true)
         return
       }
-      let at = atMessages[0]
-      let qq = at.qq
       let atUser = _.trimStart(at.text, '@')
       let chat = await redis.get(`CHATGPT:META:${qq}`)
       if (!chat) {
