@@ -689,8 +689,8 @@ class OpenClawApi {
         try {
           responseText = await res.text()
         } catch (err) {
-          // A missing route never ran the message; any other cut-off response might have.
-          if (![404, 405].includes(res.status)) {
+          // A 4xx means the gateway rejected the message; a cut-off 5xx might have run it.
+          if (res.status >= 500) {
             throw markSubmitted(err)
           }
           responseText = ''
