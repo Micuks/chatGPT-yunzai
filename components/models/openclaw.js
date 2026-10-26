@@ -189,14 +189,20 @@ class OpenClawApi {
       return null
     }
 
-    const exact = sessions.find((item) => item?.key === sessionKey)
+    // Only trust well-formed session entries with a string key before matching,
+    // so a malformed/spoofed entry from the response cannot be selected.
+    const isValidSession = (item) =>
+      !!item && typeof item === 'object' && typeof item.key === 'string'
+
+    const exact = sessions.find((item) => isValidSession(item) && item.key === sessionKey)
     if (exact) return exact
 
     // Gateway may scope keys with a prefix, e.g. `agent:main:<sessionKey>`.
-    const scoped = sessions.find((item) =>
-      String(item?.key || '').endsWith(`:${sessionKey}`)
+    // Require the scoped match to be unambiguous to avoid picking the wrong session.
+    const scopedMatches = sessions.filter((item) =>
+      isValidSession(item) && item.key.endsWith(`:${sessionKey}`)
     )
-    return scoped || null
+    return scopedMatches.length === 1 ? scopedMatches[0] : null
   }
 
   getMessagesFromPayload (payload, sessionKey = '') {
