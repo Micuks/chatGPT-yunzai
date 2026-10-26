@@ -685,7 +685,16 @@ class OpenClawApi {
         if (res.status === 202 || res.status === 200) {
           return true
         }
-        const responseText = await res.text().catch(() => '')
+        let responseText
+        try {
+          responseText = await res.text()
+        } catch (err) {
+          // A missing route never ran the message; any other cut-off response might have.
+          if (![404, 405].includes(res.status)) {
+            throw markSubmitted(err)
+          }
+          responseText = ''
+        }
         lastErr = new Error(`OpenClaw submit failed with status ${res.status}: ${responseText}`)
       }
 
