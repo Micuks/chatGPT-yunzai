@@ -43,14 +43,17 @@ class OpenClawApi {
 
   warnIfPlaintextToken () {
     if (!Config.openClawToken) return
-    for (const raw of [this.baseUrl, Config.openClawWsUrl]) {
+    const warned = new Set()
+    for (const raw of [this.baseUrl, ...this.buildWsUrlCandidates()]) {
       let url
       try {
         url = new URL(String(raw || ''))
       } catch (err) {
         continue
       }
-      if (['http:', 'ws:'].includes(url.protocol) && !isLoopbackHost(url.hostname)) {
+      if (['http:', 'ws:'].includes(url.protocol) && !isLoopbackHost(url.hostname) &&
+        !warned.has(url.host)) {
+        warned.add(url.host)
         console.warn(
           `[OpenClaw] Token will be sent unencrypted to ${url.host}. Use https:// / wss:// for remote gateways.`
         )
@@ -243,7 +246,11 @@ class OpenClawApi {
       return {
         text,
         stopReason,
-        timestamp: Number(msg.timestamp || 0)
+        timestamp: Number(msg.timestamp || 0),
+        position: messages
+          .slice(0, i + 1)
+          .filter((item) => String(item?.role || '').toLowerCase() === 'assistant')
+          .length
       }
     }
 
@@ -254,10 +261,11 @@ class OpenClawApi {
     if (!latest || !latest.text) return false
     if (!previous) return true
 
-    if (latest.timestamp && previous.timestamp) {
-      return latest.timestamp > previous.timestamp
-    }
-    return latest.text !== previous.text
+    const timestamped = latest.timestamp && previous.timestamp
+    if (timestamped && latest.timestamp > previous.timestamp) return true
+    // Position catches identical answers that lack distinct timestamps.
+    if (latest.position > previous.position) return true
+    return !timestamped && latest.text !== previous.text
   }
 
   getPayloadStatus (payload) {

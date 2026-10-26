@@ -95,7 +95,7 @@ REST-only variables are `OPENCLAW_AGENT_HOOK_PATH`, `OPENCLAW_SESSION_PATH`, `OP
 | `#openclaw状态`, `#openclawstatus` | Show the current OpenClaw config (master only, token not shown) |
 | `#聊天帮助`, `#chathelp`, `#chatgpthelp`, `#chatmenu` | Help |
 | `#聊天列表` | List users with session records (master only) |
-| `#结束聊天`, `#停止对话` (@user requires master) | Delete a session record |
+| `#结束聊天`, `#停止对话` (@ another user requires master) | Delete a session record |
 | `#清除队列`, `#清空队列` | Clean active and waiting queue jobs |
 
 A message with an empty question body (for example a bare `?`) is sent as the placeholder prompt `This is a blank prompt.`.
