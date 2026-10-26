@@ -265,7 +265,8 @@ class OpenClawApi {
     if (timestamped && latest.timestamp > previous.timestamp) return true
     // Position catches identical answers that lack distinct timestamps.
     if (latest.position > previous.position) return true
-    return !timestamped && latest.text !== previous.text
+    if (timestamped && latest.timestamp < previous.timestamp) return false
+    return latest.text !== previous.text
   }
 
   getPayloadStatus (payload) {
@@ -665,28 +666,31 @@ class OpenClawApi {
 
     let lastErr
     for (let attempt = 0; attempt <= retries; attempt++) {
+      let res
       try {
-        const res = await fetch(url, {
+        res = await fetch(url, {
           method: 'POST',
           headers,
           body: JSON.stringify(payload)
         })
-        if (res.status === 202 || res.status === 200) {
-          return true
-        }
-        const responseText = await res.text()
-        throw new Error(`OpenClaw submit failed with status ${res.status}: ${responseText}`)
       } catch (err) {
         // Without an HTTP status we cannot tell whether the gateway accepted the POST.
-        if (!String(err?.message || '').includes('submit failed with status') &&
-          !isConnectError(err)) {
+        if (!isConnectError(err)) {
           throw markSubmitted(err)
         }
         lastErr = err
-        if (attempt < retries) {
-          await delay(retryDelayMs)
-          continue
+      }
+
+      if (res) {
+        if (res.status === 202 || res.status === 200) {
+          return true
         }
+        const responseText = await res.text().catch(() => '')
+        lastErr = new Error(`OpenClaw submit failed with status ${res.status}: ${responseText}`)
+      }
+
+      if (attempt < retries) {
+        await delay(retryDelayMs)
       }
     }
 
